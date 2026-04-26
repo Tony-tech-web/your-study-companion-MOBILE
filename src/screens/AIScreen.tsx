@@ -17,7 +17,14 @@ const MODELS = [
   { id: 'openrouter', label: 'GPT-4o', sub: 'OpenRouter credits' },
 ];
 
+const MOCK_PDFS = [
+  { id: 'pdf1', name: 'CSC 303 Lecture 1-4.pdf', pages: 42, type: 'course' },
+  { id: 'pdf2', name: 'Biology 101 Syllabus.pdf', pages: 5, type: 'doc' },
+  { id: 'pdf3', name: 'Research Paper - AI in Edu.pdf', pages: 12, type: 'research' },
+];
+
 type Mode = 'chat' | 'teach' | 'test';
+type ActiveSession = 'none' | 'teach' | 'test';
 
 const MessageBubble = ({ msg }: { msg: AIConversationEntry }) => {
   const isUser = msg.role === 'user';
@@ -47,6 +54,13 @@ export default function AIScreen() {
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [autoSwitch, setAutoSwitch] = useState(true);
   const [mode, setMode] = useState<Mode>('chat');
+  
+  // Session State
+  const [activeSession, setActiveSession] = useState<ActiveSession>('none');
+  const [selectedPdf, setSelectedPdf] = useState<typeof MOCK_PDFS[0] | null>(null);
+  const [showPdfPicker, setShowPdfPicker] = useState(false);
+  const [pendingSessionType, setPendingSessionType] = useState<'teach' | 'test'>('teach');
+  
   const [libraryActive, setLibraryActive] = useState(false);
   const [studyToolsActive, setStudyToolsActive] = useState(false);
 
@@ -134,6 +148,51 @@ export default function AIScreen() {
     ]);
   };
 
+  const handleEndSession = () => {
+    Alert.alert('End Session', 'Are you sure you want to end this study session?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'End', style: 'destructive', onPress: () => {
+        setActiveSession('none');
+        setSelectedPdf(null);
+        setMode('chat');
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: 'Session ended. Back to normal chat.', created_at: new Date().toISOString() }]);
+      }}
+    ]);
+  };
+
+  const startSession = (pdf: typeof MOCK_PDFS[0]) => {
+    setSelectedPdf(pdf);
+    setActiveSession(pendingSessionType);
+    setMode(pendingSessionType);
+    setShowPdfPicker(false);
+    
+    const initMsg = pendingSessionType === 'teach' 
+      ? `I've loaded "${pdf.name}". I'll teach you this material. What part would you like to start with?`
+      : `Test mode active for "${pdf.name}". I'll quiz you on the contents. Ready for the first question?`;
+      
+    setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: initMsg, created_at: new Date().toISOString() }]);
+  };
+
+  const handleModeSelect = (newMode: Mode) => {
+    if (activeSession !== 'none' && newMode !== activeSession) {
+      Alert.alert('Active Session', 'You must end your current session to switch modes.');
+      return;
+    }
+    
+    if (newMode === 'teach' || newMode === 'test') {
+      if (activeSession === 'none') {
+        setPendingSessionType(newMode);
+        setShowPdfPicker(true);
+      } else {
+        setMode(newMode);
+      }
+    } else {
+      setMode('chat');
+    }
+  };
+
+  const currentModelLabel = MODELS.find(m => m.id === model)?.label || 'Model';
+
   if (fetching) return (
     <View style={s.root}>
       <View style={{ padding: 20, gap: 14 }}>
@@ -202,23 +261,71 @@ export default function AIScreen() {
         </TouchableOpacity>
       </Modal>
 
+      {/* PDF Picker Modal */}
+      <Modal visible={showPdfPicker} transparent animationType="slide" onRequestClose={() => setShowPdfPicker(false)}>
+        <View style={s.bottomSheetOverlay}>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setShowPdfPicker(false)} activeOpacity={1} />
+          <View style={s.bottomSheet}>
+            <View style={s.sheetHeader}>
+              <Text style={s.sheetTitle}>Select Material for {pendingSessionType === 'teach' ? 'Teaching' : 'Testing'}</Text>
+              <TouchableOpacity onPress={() => setShowPdfPicker(false)}>
+                <Text style={s.sheetClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={s.sheetSub}>Choose a PDF from your library to begin the session.</Text>
+            
+            <ScrollView style={{ maxHeight: 300, marginTop: spacing.md }}>
+              {MOCK_PDFS.map(pdf => (
+                <TouchableOpacity key={pdf.id} style={s.pdfItem} onPress={() => startSession(pdf)}>
+                  <Text style={s.pdfIcon}>📄</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.pdfName}>{pdf.name}</Text>
+                    <Text style={s.pdfMeta}>{pdf.pages} pages · {pdf.type}</Text>
+                  </View>
+                  <Text style={{ color: colors.primary }}>→</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* Header */}
       <View style={[s.header, { paddingTop: insets.top + spacing.sm }]}>
         <View>
           <Text style={s.title}>Orbit AI</Text>
           <View style={s.statusRow}>
-            <View style={s.statusDot} />
-            <Text style={s.statusText}>NEURAL LINK ACTIVE</Text>
+            {activeSession !== 'none' ? (
+              <>
+                <View style={[s.statusDot, { backgroundColor: activeSession === 'teach' ? colors.primary : colors.green }]} />
+                <Text style={[s.statusText, { color: activeSession === 'teach' ? colors.primary : colors.green }]}>
+                  {activeSession === 'teach' ? 'TEACHING SESSION' : 'TESTING SESSION'}
+                </Text>
+              </>
+            ) : (
+              <>
+                <View style={s.statusDot} />
+                <Text style={s.statusText}>NEURAL LINK ACTIVE</Text>
+              </>
+            )}
           </View>
         </View>
         <View style={s.headerRight}>
-          <TouchableOpacity style={s.modelPill} onPress={() => setShowModelPicker(true)}>
-            <Text style={s.modelPillText}>{currentModelLabel}</Text>
-            <Text style={s.modelPillChevron}>⌄</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.clearBtn} onPress={handleClear}>
-            <Text style={s.clearBtnText}>🗑️</Text>
-          </TouchableOpacity>
+          {activeSession !== 'none' ? (
+            <TouchableOpacity style={s.endSessionBtn} onPress={handleEndSession}>
+              <Text style={s.endSessionText}>End Session</Text>
+            </TouchableOpacity>
+          ) : (
+            <>
+              <TouchableOpacity style={s.modelPill} onPress={() => setShowModelPicker(true)}>
+                <Text style={s.modelPillText}>{currentModelLabel}</Text>
+                <Text style={s.modelPillChevron}>⌄</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.clearBtn} onPress={handleClear}>
+                <Text style={s.clearBtnText}>🗑️</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
 
@@ -269,14 +376,14 @@ export default function AIScreen() {
         {/* Action Bar */}
         <View style={s.actionBar}>
           <View style={s.actionLeft}>
-            <TouchableOpacity style={[s.actionBtn, mode === 'chat' && s.actionBtnActive]} onPress={() => setMode('chat')}>
+            <TouchableOpacity style={[s.actionBtn, mode === 'chat' && s.actionBtnActive]} onPress={() => handleModeSelect('chat')}>
               <Text style={[s.actionBtnText, mode === 'chat' && s.actionBtnTextActive]}>✨ Chat</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[s.actionBtn, mode === 'teach' && s.actionBtnActive]} onPress={() => setMode('teach')}>
+            <TouchableOpacity style={[s.actionBtn, mode === 'teach' && s.actionBtnActive, activeSession === 'teach' && { borderColor: colors.primary }]} onPress={() => handleModeSelect('teach')}>
               <Text style={[s.actionBtnText, mode === 'teach' && s.actionBtnTextActive]}>🧠 Teach</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[s.actionBtn, mode === 'test' && s.actionBtnActive]} onPress={() => setMode('test')}>
-              <Text style={[s.actionBtnText, mode === 'test' && s.actionBtnTextActive]}>🧪 Test</Text>
+            <TouchableOpacity style={[s.actionBtn, mode === 'test' && s.actionBtnActive, activeSession === 'test' && { borderColor: colors.green }]} onPress={() => handleModeSelect('test')}>
+              <Text style={[s.actionBtnText, mode === 'test' && s.actionBtnTextActive, activeSession === 'test' && { color: colors.green }]}>🧪 Test</Text>
             </TouchableOpacity>
           </View>
           <View style={s.actionRight}>
@@ -327,8 +434,10 @@ const s = StyleSheet.create({
   modelPillChevron: { color: colors.muted, fontSize: 14, marginTop: -2 },
   clearBtn: { width: 32, height: 32, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.03)' },
   clearBtnText: { fontSize: 14 },
+  endSessionBtn: { backgroundColor: colors.red + '20', borderWidth: 1, borderColor: colors.red, paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.full },
+  endSessionText: { color: colors.red, fontSize: typography.xs, fontWeight: '700' },
 
-  // Modal
+  // Modals
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-start', alignItems: 'flex-end', paddingTop: 90, paddingRight: spacing.md },
   modalContent: { width: 260, backgroundColor: '#141414', borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: spacing.md, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20 },
   modalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -339,6 +448,17 @@ const s = StyleSheet.create({
   modelOption: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: spacing.sm },
   modelOptionLabel: { color: colors.foreground, fontSize: typography.sm, fontWeight: '600' },
   modelOptionSub: { color: colors.muted, fontSize: 11, marginTop: 2 },
+  
+  bottomSheetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  bottomSheet: { backgroundColor: colors.card, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing.lg, paddingBottom: spacing.xxl, borderWidth: 1, borderColor: colors.border },
+  sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  sheetTitle: { color: colors.foreground, fontSize: typography.lg, fontWeight: '800' },
+  sheetClose: { color: colors.muted, fontSize: 24, fontWeight: '300' },
+  sheetSub: { color: colors.muted, fontSize: typography.sm },
+  pdfItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.background, padding: spacing.md, borderRadius: radius.lg, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border },
+  pdfIcon: { fontSize: 24 },
+  pdfName: { color: colors.foreground, fontSize: typography.sm, fontWeight: '600', marginBottom: 2 },
+  pdfMeta: { color: colors.muted, fontSize: typography.xs },
 
   // Messages
   list: { padding: spacing.md, gap: spacing.md, paddingBottom: spacing.xxl },

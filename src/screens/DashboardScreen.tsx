@@ -102,13 +102,19 @@ export default function DashboardScreen() {
     >
       {/* Header */}
       <View style={s.header}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={s.greeting}>Good day,</Text>
           <Text style={s.name}>{stats?.user.name || user?.email?.split('@')[0] || 'Scholar'} 👋</Text>
         </View>
-        <TouchableOpacity style={s.signOutBtn} onPress={signOut}>
-          <Text style={s.signOutText}>Sign out</Text>
-        </TouchableOpacity>
+        <View style={{ alignItems: 'flex-end', gap: 10 }}>
+          <View style={s.statusPill}>
+            <View style={s.statusDot} />
+            <Text style={s.statusText}>Online</Text>
+          </View>
+          <TouchableOpacity style={s.signOutBtn} onPress={signOut}>
+            <Text style={s.signOutText}>Sign out</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* XP Bar */}
@@ -168,6 +174,9 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.lg },
   greeting: { color: colors.muted, fontSize: typography.sm },
   name: { color: colors.foreground, fontSize: typography['2xl'], fontWeight: '800' },
+  statusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.green + '15', paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.full },
+  statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.green },
+  statusText: { color: colors.green, fontSize: 11, fontWeight: '600' },
   signOutBtn: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.md, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
   signOutText: { color: colors.muted, fontSize: typography.xs, fontWeight: '600' },
   xpCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.md, borderWidth: 1, borderColor: colors.border },

@@ -143,6 +143,19 @@ No markdown, no explanation.`,
     finally { setGenLoading(false); }
   };
 
+  const handleConfirmProgress = () => {
+    Alert.alert('Confirm Progress', 'Did you complete your study tasks for today?', [
+      { text: 'Not yet', style: 'cancel' },
+      { text: 'Yes, Done!', style: 'default', onPress: () => {
+        Alert.alert('Great Job!', '+50 XP Earned!');
+        // Ideally we'd update backend progress here
+        if (selected) {
+          setPlans(prev => prev.map(p => p.id === selected.id ? { ...p, progress: Math.min(100, p.progress + 10) } : p));
+        }
+      }}
+    ]);
+  };
+
   // Calendar helpers
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -236,7 +249,7 @@ No markdown, no explanation.`,
         <TouchableOpacity onPress={() => setView('detail')}>
           <Text style={s.backBtn}>← Plan</Text>
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Calendar</Text>
+        <Text style={s.headerTitle}>Timeline</Text>
         <View />
       </View>
 
@@ -277,26 +290,53 @@ No markdown, no explanation.`,
           </View>
         ) : (() => {
           const daySchedule = getScheduleForDate(selectedDate);
-          return daySchedule ? (
-            daySchedule.tasks.map((task, i) => (
-              <View key={i} style={s.calTask}>
-                <View style={s.calTaskBar} />
-                <View style={{ flex: 1 }}>
-                  <View style={s.calTaskHeader}>
-                    <Text style={s.calTaskSubject}>{task.subject}</Text>
-                    <Text style={s.calTaskDuration}>{task.duration}</Text>
-                  </View>
-                  <Text style={s.calTaskFocus}>{task.focus}</Text>
-                </View>
-              </View>
-            ))
-          ) : (
+          if (!daySchedule) return (
             <View style={s.calEmpty}>
               <Text style={s.calEmptyText}>No tasks scheduled for this day</Text>
             </View>
           );
+          
+          let currentHour = 9; // Start at 9 AM
+          
+          return (
+            <View style={s.timelineContainer}>
+              {daySchedule.tasks.map((task, i) => {
+                const durationMatch = task.duration.match(/(\d+)/);
+                const hours = durationMatch ? parseInt(durationMatch[0]) : 1;
+                const startTime = `${currentHour.toString().padStart(2, '0')}:00`;
+                currentHour += hours;
+                const endTime = `${currentHour.toString().padStart(2, '0')}:00`;
+                
+                return (
+                  <View key={i} style={s.timelineRow}>
+                    <View style={s.timelineTimeBox}>
+                      <Text style={s.timelineTimeText}>{startTime}</Text>
+                      <View style={s.timelineLine} />
+                    </View>
+                    <View style={[s.calTask, { minHeight: hours * 60 }]}>
+                      <View style={s.calTaskBar} />
+                      <View style={{ flex: 1 }}>
+                        <View style={s.calTaskHeader}>
+                          <Text style={s.calTaskSubject}>{task.subject}</Text>
+                          <Text style={s.calTaskDuration}>{task.duration} ({startTime} - {endTime})</Text>
+                        </View>
+                        <Text style={s.calTaskFocus}>{task.focus}</Text>
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          );
         })()}
       </ScrollView>
+      
+      {/* Confirm Progress Floating Button */}
+      {getScheduleForDate(selectedDate) && (
+        <TouchableOpacity style={s.confirmProgressBtn} onPress={handleConfirmProgress}>
+          <Text style={s.confirmProgressText}>Confirm Progress</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -471,16 +511,31 @@ const s = StyleSheet.create({
   weekNavBtn: { padding: spacing.sm },
   weekNavText: { color: colors.primary, fontSize: typography.xs, fontWeight: '600' },
   weekNavMonth: { color: colors.foreground, fontSize: typography.sm, fontWeight: '700' },
-  calContent: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.xxl },
+  // Calendar Timeline
+  timelineContainer: { marginTop: spacing.md },
+  timelineRow: { flexDirection: 'row', alignItems: 'stretch' },
+  timelineTimeBox: { width: 50, alignItems: 'center' },
+  timelineTimeText: { color: colors.muted, fontSize: 10, fontWeight: '700', marginTop: -6 },
+  timelineLine: { width: 2, flex: 1, backgroundColor: colors.border, marginVertical: 4 },
+  
+  calContent: { padding: spacing.md, gap: spacing.sm, paddingBottom: spacing.xxl + 40 },
   calDateTitle: { color: colors.foreground, fontSize: typography.lg, fontWeight: '800', marginBottom: spacing.sm },
-  calTask: { flexDirection: 'row', gap: spacing.sm, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
+  calTask: { flex: 1, flexDirection: 'row', gap: spacing.sm, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border, marginBottom: spacing.md },
   calTaskBar: { width: 3, borderRadius: 2, backgroundColor: colors.primary },
-  calTaskHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  calTaskHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 4 },
   calTaskSubject: { color: colors.foreground, fontSize: typography.sm, fontWeight: '700' },
   calTaskDuration: { color: colors.primary, fontSize: typography.xs, fontWeight: '600' },
   calTaskFocus: { color: colors.muted, fontSize: typography.xs },
   calEmpty: { alignItems: 'center', padding: spacing.xl },
   calEmptyText: { color: colors.muted, fontSize: typography.sm, textAlign: 'center' },
+  
+  confirmProgressBtn: {
+    position: 'absolute', bottom: spacing.xxl + 20, right: spacing.md,
+    backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
+    borderRadius: radius.full, ...shadow.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'center'
+  },
+  confirmProgressText: { color: '#fff', fontSize: typography.sm, fontWeight: '700' },
+
   // Modal
   modal: { flex: 1, backgroundColor: colors.background },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.border },
