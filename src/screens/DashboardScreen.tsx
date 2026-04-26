@@ -3,10 +3,12 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   RefreshControl, ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { getFullDashboardStats, getTasks, getActivity, FullStats } from '../services/dashboard';
 import { Task, StudyActivity } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import Skeleton from '../components/Skeleton';
 
 const StatCard = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
   <View style={s.statCard}>
@@ -30,6 +32,7 @@ const ActivityBar = ({ day, hours, max }: { day: string; hours: number; max: num
 
 export default function DashboardScreen() {
   const { user, signOut } = useAuth();
+  const insets = useSafeAreaInsets();
   const [stats, setStats] = useState<FullStats | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [activity, setActivity] = useState<StudyActivity[]>([]);
@@ -60,15 +63,29 @@ export default function DashboardScreen() {
   const xpProgress = stats ? (stats.user.xp / stats.user.maxXp) : 0;
 
   if (loading) return (
-    <View style={s.center}>
-      <ActivityIndicator color={colors.primary} size="large" />
+    <View style={[s.root, { padding: spacing.lg, paddingTop: insets.top + spacing.md }]}>
+      <View style={s.header}>
+        <View>
+          <Skeleton width={80} height={14} style={{ marginBottom: 6 }} />
+          <Skeleton width={160} height={28} />
+        </View>
+        <Skeleton width={70} height={36} borderRadius={radius.md} />
+      </View>
+      <Skeleton width="100%" height={80} style={{ marginBottom: spacing.md }} borderRadius={radius.lg} />
+      <View style={s.statsGrid}>
+        <Skeleton width="45%" height={80} borderRadius={radius.lg} />
+        <Skeleton width="45%" height={80} borderRadius={radius.lg} />
+        <Skeleton width="45%" height={80} borderRadius={radius.lg} />
+        <Skeleton width="45%" height={80} borderRadius={radius.lg} />
+      </View>
+      <Skeleton width="100%" height={160} borderRadius={radius.lg} style={{ marginBottom: spacing.lg }} />
     </View>
   );
 
   return (
     <ScrollView
       style={s.root}
-      contentContainerStyle={s.content}
+      contentContainerStyle={[s.content, { paddingTop: insets.top + spacing.md }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
     >
       {/* Header */}

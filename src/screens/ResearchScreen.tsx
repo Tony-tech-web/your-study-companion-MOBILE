@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   TextInput, ActivityIndicator, RefreshControl, Alert, Linking,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { callEdgeFunction } from '../lib/supabase';
 import { getResearchHistory, deleteResearchEntry } from '../services/research';
@@ -14,6 +15,7 @@ interface AIInsights { insights: string; gaps: string[]; relatedTopics: string[]
 const MODES = [{ id: 'academic', label: '📄 Academic' }, { id: 'projects', label: '💻 Projects' }];
 
 export default function ResearchScreen() {
+  const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<'academic' | 'projects'>('academic');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -81,7 +83,7 @@ Focus on what this source covers, its relevance, and how a student could use it.
 
   return (
     <View style={s.root}>
-      <View style={s.header}>
+      <View style={[s.header, { paddingTop: insets.top + spacing.sm }]}>
         <Text style={s.title}>Research</Text>
         <Text style={s.subtitle}>Powered by Serper + AI</Text>
       </View>

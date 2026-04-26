@@ -4,6 +4,7 @@ import {
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { callEdgeFunction } from '../lib/supabase';
 import { getAIConversations, saveAIConversation, clearAIConversations, AIConversationEntry } from '../services/ai';
@@ -38,6 +39,7 @@ export default function AIScreen() {
   const [model, setModel] = useState('google');
   const [streaming, setStreaming] = useState('');
   const flatRef = useRef<FlatList>(null);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => { loadHistory(); }, []);
 
@@ -125,9 +127,9 @@ export default function AIScreen() {
   if (fetching) return <View style={s.center}><ActivityIndicator color={colors.primary} /></View>;
 
   return (
-    <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+    <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={90}>
       {/* Header */}
-      <View style={s.header}>
+      <View style={[s.header, { paddingTop: insets.top + spacing.sm }]}>
         <View>
           <Text style={s.title}>Orbit AI</Text>
           <View style={s.statusRow}>

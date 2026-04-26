@@ -3,24 +3,36 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   TextInput, Modal, Alert, ActivityIndicator, RefreshControl,
 } from 'react-native';
-import { colors, spacing, radius, typography } from '../lib/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, spacing, radius, typography, shadow } from '../lib/theme';
 import { getStudyPlans, createStudyPlan, deleteStudyPlan } from '../services/planner';
 import { StudyPlan } from '../types';
 import { callEdgeFunction } from '../lib/supabase';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 
-type View = 'list' | 'calendar' | 'detail';
+type PlanView = 'list' | 'calendar' | 'detail';
 
 interface ScheduleTask { subject: string; duration: string; focus: string; }
 interface ScheduleDay { day: string; date: string; tasks: ScheduleTask[]; }
 
 const cleanText = (t: string) => t.replace(/\{\{[^}]+\}\}/g, '').trim();
 
+const PREDEFINED_CATEGORIES = [
+  { id: 'Math', icon: '➗', label: 'Mathematics' },
+  { id: 'Physics', icon: '⚛️', label: 'Physics' },
+  { id: 'CS', icon: '💻', label: 'Comp Sci' },
+  { id: 'Bio', icon: '🧬', label: 'Biology' },
+  { id: 'Chem', icon: '🧪', label: 'Chemistry' },
+  { id: 'Lit', icon: '📚', label: 'Literature' },
+  { id: 'History', icon: '🏛️', label: 'History' },
+];
+
 export default function PlannerScreen() {
+  const insets = useSafeAreaInsets();
   const [plans, setPlans] = useState<StudyPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [view, setView] = useState<View>('list');
+  const [view, setView] = useState<PlanView>('list');
   const [selected, setSelected] = useState<StudyPlan | null>(null);
   const [schedule, setSchedule] = useState<ScheduleDay[]>([]);
   const [genLoading, setGenLoading] = useState(false);
@@ -145,7 +157,7 @@ No markdown, no explanation.`,
   // ── Detail view ──────────────────────────────────────────────────────────
   if (view === 'detail' && selected) return (
     <View style={s.root}>
-      <View style={s.header}>
+      <View style={[s.header, { paddingTop: insets.top + spacing.sm }]}>
         <TouchableOpacity onPress={() => { setView('list'); setSchedule([]); }}>
           <Text style={s.backBtn}>← Back</Text>
         </TouchableOpacity>
@@ -157,11 +169,11 @@ No markdown, no explanation.`,
 
       {/* View toggle */}
       <View style={s.toggleRow}>
-        {(['list', 'calendar'] as const).map(v => (
+        {(['detail', 'calendar'] as const).map(v => (
           <TouchableOpacity key={v} style={[s.toggleBtn, view === v && s.toggleBtnActive]}
-            onPress={() => setView(v === 'list' ? 'detail' : 'calendar')}>
+            onPress={() => setView(v)}>
             <Text style={[s.toggleBtnText, view === v && s.toggleBtnTextActive]}>
-              {v === 'list' ? 'Schedule' : 'Calendar'}
+              {v === 'detail' ? 'Schedule' : 'Calendar'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -220,7 +232,7 @@ No markdown, no explanation.`,
   // ── Calendar view ─────────────────────────────────────────────────────────
   if (view === 'calendar' && selected) return (
     <View style={s.root}>
-      <View style={s.header}>
+      <View style={[s.header, { paddingTop: insets.top + spacing.sm }]}>
         <TouchableOpacity onPress={() => setView('detail')}>
           <Text style={s.backBtn}>← Plan</Text>
         </TouchableOpacity>
@@ -291,7 +303,7 @@ No markdown, no explanation.`,
   // ── List view ─────────────────────────────────────────────────────────────
   return (
     <View style={s.root}>
-      <View style={s.header}>
+      <View style={[s.header, { paddingTop: insets.top + spacing.sm }]}>
         <Text style={s.title}>Study Planner</Text>
         <TouchableOpacity style={s.addBtn} onPress={() => setShowAdd(true)}>
           <Text style={s.addBtnText}>+ New Plan</Text>
@@ -357,15 +369,34 @@ No markdown, no explanation.`,
               placeholder="e.g. 20" placeholderTextColor={colors.muted} keyboardType="numeric" />
 
             <View style={s.subjectsRow}>
-              <Text style={[s.inputLabel, { flex: 1 }]}>Subjects (comma-separated)</Text>
+              <Text style={[s.inputLabel, { flex: 1 }]}>Categories</Text>
               <TouchableOpacity style={s.aiBtn} onPress={handleAISuggest} disabled={aiSuggestLoading}>
                 {aiSuggestLoading
                   ? <ActivityIndicator color={colors.primary} size="small" />
                   : <Text style={s.aiBtnText}>✨ AI Suggest</Text>}
               </TouchableOpacity>
             </View>
-            <TextInput style={[s.input, { minHeight: 80 }]} value={subjects} onChangeText={setSubjects}
-              placeholder="e.g. CSC, Math, Physics" placeholderTextColor={colors.muted} multiline />
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.lg }} style={{ marginHorizontal: -spacing.lg, paddingHorizontal: spacing.lg, marginBottom: spacing.sm }}>
+              {PREDEFINED_CATEGORIES.map(c => {
+                const current = subjects.split(',').map(x => x.trim()).filter(Boolean);
+                const active = current.includes(c.label);
+                return (
+                  <TouchableOpacity key={c.id} style={[s.catChip, active && s.catChipActive]}
+                    onPress={() => {
+                      if (active) setSubjects(current.filter(x => x !== c.label).join(', '));
+                      else setSubjects([...current, c.label].join(', '));
+                    }}>
+                    <Text style={s.catChipIcon}>{c.icon}</Text>
+                    <Text style={[s.catChipText, active && s.catChipTextActive]}>{c.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <Text style={s.inputLabel}>Or add custom (comma-separated)</Text>
+            <TextInput style={[s.input, { minHeight: 60, marginBottom: spacing.md }]} value={subjects} onChangeText={setSubjects}
+              placeholder="e.g. Economics, Law" placeholderTextColor={colors.muted} multiline />
 
             <TouchableOpacity style={s.saveBtn} onPress={handleAdd} disabled={addLoading}>
               {addLoading ? <ActivityIndicator color="#fff" /> : <Text style={s.saveBtnText}>Create Plan</Text>}
@@ -461,6 +492,11 @@ const s = StyleSheet.create({
   subjectsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.sm },
   aiBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.primary },
   aiBtnText: { color: colors.primary, fontSize: typography.xs, fontWeight: '600' },
-  saveBtn: { backgroundColor: colors.primary, borderRadius: radius.md, padding: spacing.md, alignItems: 'center', marginTop: spacing.md },
+  saveBtn: { backgroundColor: colors.primary, borderRadius: radius.full, padding: spacing.md, alignItems: 'center', marginTop: spacing.md, ...shadow.sm },
   saveBtnText: { color: '#fff', fontSize: typography.base, fontWeight: '700' },
+  catChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.card, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border },
+  catChipActive: { backgroundColor: colors.primary + '20', borderColor: colors.primary },
+  catChipIcon: { fontSize: 14 },
+  catChipText: { color: colors.muted, fontSize: typography.sm, fontWeight: '600' },
+  catChipTextActive: { color: colors.primary },
 });

@@ -1,6 +1,6 @@
 export const colors = {
-  // Dark theme (matches web)
-  primary: '#f27d26',
+  // Dark theme
+  primary: '#82b9d8', // Light blue from reference image
   background: '#0a0a0a',
   card: '#141414',
   border: '#222222',
@@ -11,10 +11,8 @@ export const colors = {
   green: '#10b981',
   blue: '#3b82f6',
   yellow: '#f59e0b',
-  // iOS-style surface tints
   surface: '#1a1a1a',
   surfaceElevated: '#222222',
-  // Separator
   separator: '#2a2a2a',
 };
 
@@ -32,17 +30,18 @@ export const typography = {
 
 export const shadow = {
   sm: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowColor: '#82b9d8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 3,
   },
   md: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowColor: '#82b9d8',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 8,
   },
 };
+

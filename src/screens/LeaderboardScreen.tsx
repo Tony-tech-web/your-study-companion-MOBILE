@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Image, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { getLeaderboard, LeaderboardResult } from '../services/leaderboard';
 import { useAuth } from '../contexts/AuthContext';
+import Skeleton from '../components/Skeleton';
 
 const MEDAL = ['🥇', '🥈', '🥉'];
 
 export default function LeaderboardScreen() {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const [result, setResult] = useState<LeaderboardResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -27,7 +30,44 @@ export default function LeaderboardScreen() {
 
   useEffect(() => { load(); }, []);
 
-  if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} /></View>;
+  if (loading) return (
+    <View style={[s.root, { padding: spacing.md, paddingTop: insets.top + spacing.sm }]}>
+      <Skeleton width={150} height={30} style={{ marginBottom: spacing.xl }} />
+      {/* Podium skeleton */}
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: spacing.sm, height: 180, marginBottom: spacing.xl }}>
+        <View style={{ alignItems: 'center' }}>
+          <Skeleton width={48} height={48} borderRadius={24} style={{ marginBottom: 4 }} />
+          <Skeleton width={60} height={10} style={{ marginBottom: 4 }} />
+          <Skeleton width={40} height={10} style={{ marginBottom: 4 }} />
+          <Skeleton width={80} height={60} />
+        </View>
+        <View style={{ alignItems: 'center' }}>
+          <Skeleton width={60} height={60} borderRadius={30} style={{ marginBottom: 4 }} />
+          <Skeleton width={70} height={10} style={{ marginBottom: 4 }} />
+          <Skeleton width={40} height={10} style={{ marginBottom: 4 }} />
+          <Skeleton width={90} height={90} />
+        </View>
+        <View style={{ alignItems: 'center' }}>
+          <Skeleton width={48} height={48} borderRadius={24} style={{ marginBottom: 4 }} />
+          <Skeleton width={60} height={10} style={{ marginBottom: 4 }} />
+          <Skeleton width={40} height={10} style={{ marginBottom: 4 }} />
+          <Skeleton width={80} height={45} />
+        </View>
+      </View>
+      {/* List skeleton */}
+      {[1, 2, 3, 4].map(i => (
+        <View key={i} style={{ flexDirection: 'row', alignItems: 'center', padding: spacing.md, backgroundColor: colors.card, borderRadius: radius.lg, marginBottom: spacing.sm }}>
+          <Skeleton width={20} height={20} style={{ marginRight: spacing.sm }} />
+          <Skeleton width={36} height={36} borderRadius={18} style={{ marginRight: spacing.sm }} />
+          <View style={{ flex: 1 }}>
+            <Skeleton width={100} height={14} style={{ marginBottom: 4 }} />
+            <Skeleton width={60} height={10} />
+          </View>
+          <Skeleton width={40} height={14} />
+        </View>
+      ))}
+    </View>
+  );
 
   if (error || !result) return (
     <View style={s.center}>
@@ -47,7 +87,7 @@ export default function LeaderboardScreen() {
   return (
     <ScrollView
       style={s.root}
-      contentContainerStyle={s.content}
+      contentContainerStyle={[s.content, { paddingTop: insets.top + spacing.sm }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
     >
       <Text style={s.title}>Leaderboard</Text>

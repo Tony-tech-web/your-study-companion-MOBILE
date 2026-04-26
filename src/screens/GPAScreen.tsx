@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   TextInput, Modal, Alert, ActivityIndicator, RefreshControl,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { getGPARecords, createGPARecord, deleteGPARecord } from '../services/gpa';
 import { GPARecord } from '../types';
@@ -16,6 +17,7 @@ const GPA_CLASS = (gpa: number) => {
 };
 
 export default function GPAScreen() {
+  const insets = useSafeAreaInsets();
   const [records, setRecords] = useState<GPARecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -69,7 +71,7 @@ export default function GPAScreen() {
 
   return (
     <View style={s.root}>
-      <View style={s.header}>
+      <View style={[s.header, { paddingTop: insets.top + spacing.sm }]}>
         <Text style={s.title}>GPA Tracker</Text>
         <TouchableOpacity style={s.addBtn} onPress={() => setShowAdd(true)}>
           <Text style={s.addBtnText}>+ Add</Text>
