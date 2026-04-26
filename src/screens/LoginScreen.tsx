@@ -42,7 +42,7 @@ export default function LoginScreen() {
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={s.logoWrap}>
             <View style={s.logoRing}>
-              <View style={s.logoInner}><Text style={s.logoText}>SC</Text></View>
+              <View style={s.logoInner}><Text style={s.logoText}>O</Text></View>
             </View>
             <Text style={s.appName}>Orbit</Text>
             <Text style={s.appTagline}>Your AI-powered academic edge</Text>

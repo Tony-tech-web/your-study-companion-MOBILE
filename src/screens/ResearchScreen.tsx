@@ -4,7 +4,7 @@ import {
   TextInput, ActivityIndicator, RefreshControl, Alert, Linking,
 } from 'react-native';
 import { colors, spacing, radius, typography } from '../lib/theme';
-import { searchResearch, getResearchHistory, deleteResearchEntry } from '../services/research';
+import { searchResearch, getResearchHistory, deleteResearchEntry, SearchResult } from '../services/research';
 import { callEdgeFunction } from '../lib/supabase';
 import { ResearchPaper } from '../types';
 
