@@ -14,6 +14,7 @@ export const colors = {
   surface: '#1a1a1a',
   surfaceElevated: '#222222',
   separator: '#2a2a2a',
+  input: '#1a1a1a',
 };
 
 export const spacing = {

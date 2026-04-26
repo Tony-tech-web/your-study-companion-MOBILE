@@ -67,7 +67,48 @@ export default function GPAScreen() {
     ]);
   };
 
-  if (loading) return <View style={s.center}><ActivityIndicator color={colors.primary} /></View>;
+  if (loading) return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ padding: 20, gap: 12 }}>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          {[0,1,2].map(i => (
+            <View key={i} style={{ flex: 1, height: 80, borderRadius: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, padding: 14, gap: 8 }}>
+              <View style={{ width: '80%', height: 22, borderRadius: 6, backgroundColor: colors.border, opacity: 0.4 }} />
+              <View style={{ width: '60%', height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.25 }} />
+            </View>
+          ))}
+        </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.border, opacity: 0.35 }} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <View style={{ width: '60%', height: 12, borderRadius: 4, backgroundColor: colors.border, opacity: 0.4 }} />
+              <View style={{ width: '40%', height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.25 }} />
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.border, opacity: 0.35 }} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <View style={{ width: '60%', height: 12, borderRadius: 4, backgroundColor: colors.border, opacity: 0.4 }} />
+              <View style={{ width: '40%', height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.25 }} />
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.border, opacity: 0.35 }} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <View style={{ width: '60%', height: 12, borderRadius: 4, backgroundColor: colors.border, opacity: 0.4 }} />
+              <View style={{ width: '40%', height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.25 }} />
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.border, opacity: 0.35 }} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <View style={{ width: '60%', height: 12, borderRadius: 4, backgroundColor: colors.border, opacity: 0.4 }} />
+              <View style={{ width: '40%', height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.25 }} />
+            </View>
+          </View>
+      </View>
+    </View>
+  );
 
   return (
     <View style={s.root}>

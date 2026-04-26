@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  RefreshControl, ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from '../lib/theme';
@@ -63,22 +63,34 @@ export default function DashboardScreen() {
   const xpProgress = stats ? (stats.user.xp / stats.user.maxXp) : 0;
 
   if (loading) return (
-    <View style={[s.root, { padding: spacing.lg, paddingTop: insets.top + spacing.md }]}>
-      <View style={s.header}>
-        <View>
-          <Skeleton width={80} height={14} style={{ marginBottom: 6 }} />
-          <Skeleton width={160} height={28} />
+    <View style={s.root}>
+      <View style={{ padding: 20, gap: 14 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ gap: 6 }}>
+            <View style={{ width: 130, height: 18, borderRadius: 6, backgroundColor: colors.border, opacity: 0.5 }} />
+            <View style={{ width: 90, height: 12, borderRadius: 4, backgroundColor: colors.border, opacity: 0.3 }} />
+          </View>
+          <View style={{ width: 52, height: 22, borderRadius: 99, backgroundColor: colors.border, opacity: 0.3 }} />
         </View>
-        <Skeleton width={70} height={36} borderRadius={radius.md} />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+          {[0,1,2,3].map(i => (
+            <View key={i} style={{ width: '47%', height: 80, borderRadius: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, padding: 14, gap: 8 }}>
+              <View style={{ width: 60, height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.4 }} />
+              <View style={{ width: 40, height: 22, borderRadius: 6, backgroundColor: colors.border, opacity: 0.3 }} />
+            </View>
+          ))}
+        </View>
+        <View style={{ height: 140, borderRadius: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }} />
+        {[0,1,2].map(i => (
+          <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.border, opacity: 0.35 }} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <View style={{ width: '60%', height: 12, borderRadius: 4, backgroundColor: colors.border, opacity: 0.4 }} />
+              <View style={{ width: '40%', height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.25 }} />
+            </View>
+          </View>
+        ))}
       </View>
-      <Skeleton width="100%" height={80} style={{ marginBottom: spacing.md }} borderRadius={radius.lg} />
-      <View style={s.statsGrid}>
-        <Skeleton width="45%" height={80} borderRadius={radius.lg} />
-        <Skeleton width="45%" height={80} borderRadius={radius.lg} />
-        <Skeleton width="45%" height={80} borderRadius={radius.lg} />
-        <Skeleton width="45%" height={80} borderRadius={radius.lg} />
-      </View>
-      <Skeleton width="100%" height={160} borderRadius={radius.lg} style={{ marginBottom: spacing.lg }} />
     </View>
   );
 

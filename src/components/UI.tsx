@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Animated, useEffect } from 'react-native';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { colors, radius, spacing } from '../lib/theme';
 
 // Skeleton loader - shimmer effect

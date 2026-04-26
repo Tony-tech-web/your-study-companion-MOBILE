@@ -31,41 +31,47 @@ export default function LeaderboardScreen() {
   useEffect(() => { load(); }, []);
 
   if (loading) return (
-    <View style={[s.root, { padding: spacing.md, paddingTop: insets.top + spacing.sm }]}>
-      <Skeleton width={150} height={30} style={{ marginBottom: spacing.xl }} />
-      {/* Podium skeleton */}
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: spacing.sm, height: 180, marginBottom: spacing.xl }}>
-        <View style={{ alignItems: 'center' }}>
-          <Skeleton width={48} height={48} borderRadius={24} style={{ marginBottom: 4 }} />
-          <Skeleton width={60} height={10} style={{ marginBottom: 4 }} />
-          <Skeleton width={40} height={10} style={{ marginBottom: 4 }} />
-          <Skeleton width={80} height={60} />
-        </View>
-        <View style={{ alignItems: 'center' }}>
-          <Skeleton width={60} height={60} borderRadius={30} style={{ marginBottom: 4 }} />
-          <Skeleton width={70} height={10} style={{ marginBottom: 4 }} />
-          <Skeleton width={40} height={10} style={{ marginBottom: 4 }} />
-          <Skeleton width={90} height={90} />
-        </View>
-        <View style={{ alignItems: 'center' }}>
-          <Skeleton width={48} height={48} borderRadius={24} style={{ marginBottom: 4 }} />
-          <Skeleton width={60} height={10} style={{ marginBottom: 4 }} />
-          <Skeleton width={40} height={10} style={{ marginBottom: 4 }} />
-          <Skeleton width={80} height={45} />
-        </View>
-      </View>
-      {/* List skeleton */}
-      {[1, 2, 3, 4].map(i => (
-        <View key={i} style={{ flexDirection: 'row', alignItems: 'center', padding: spacing.md, backgroundColor: colors.card, borderRadius: radius.lg, marginBottom: spacing.sm }}>
-          <Skeleton width={20} height={20} style={{ marginRight: spacing.sm }} />
-          <Skeleton width={36} height={36} borderRadius={18} style={{ marginRight: spacing.sm }} />
-          <View style={{ flex: 1 }}>
-            <Skeleton width={100} height={14} style={{ marginBottom: 4 }} />
-            <Skeleton width={60} height={10} />
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ padding: 20, gap: 12 }}>
+        <View style={{ width: 140, height: 22, borderRadius: 6, backgroundColor: colors.border, opacity: 0.5 }} />
+        <View style={{ height: 80, borderRadius: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }} />
+        <View style={{ height: 140, borderRadius: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.border, opacity: 0.35 }} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <View style={{ width: '60%', height: 12, borderRadius: 4, backgroundColor: colors.border, opacity: 0.4 }} />
+              <View style={{ width: '40%', height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.25 }} />
+            </View>
           </View>
-          <Skeleton width={40} height={14} />
-        </View>
-      ))}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.border, opacity: 0.35 }} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <View style={{ width: '60%', height: 12, borderRadius: 4, backgroundColor: colors.border, opacity: 0.4 }} />
+              <View style={{ width: '40%', height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.25 }} />
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.border, opacity: 0.35 }} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <View style={{ width: '60%', height: 12, borderRadius: 4, backgroundColor: colors.border, opacity: 0.4 }} />
+              <View style={{ width: '40%', height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.25 }} />
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.border, opacity: 0.35 }} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <View style={{ width: '60%', height: 12, borderRadius: 4, backgroundColor: colors.border, opacity: 0.4 }} />
+              <View style={{ width: '40%', height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.25 }} />
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.border, opacity: 0.35 }} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <View style={{ width: '60%', height: 12, borderRadius: 4, backgroundColor: colors.border, opacity: 0.4 }} />
+              <View style={{ width: '40%', height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.25 }} />
+            </View>
+          </View>
+      </View>
     </View>
   );
 
