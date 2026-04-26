@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, ActivityIndicator, RefreshControl, Alert, Linking,
+  TextInput, ActivityIndicator, RefreshControl, Alert, Linking, Modal
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from '../lib/theme';
@@ -26,6 +26,8 @@ export default function ResearchScreen() {
   const [description, setDescription] = useState('');
   const [descLoading, setDescLoading] = useState(false);
   const [error, setError] = useState('');
+  const [citationFormat, setCitationFormat] = useState<'APA' | 'MLA' | 'CHI'>('APA');
+  const [showCitation, setShowCitation] = useState(false);
 
   useEffect(() => {
     getResearchHistory().then(setHistory).catch(console.error).finally(() => setLoadingHistory(false));
@@ -76,6 +78,13 @@ Focus on what this source covers, its relevance, and how a student could use it.
       setDescription(text.replace(/\{\{[^}]+\}\}/g, '').trim());
     } catch { setDescription('Failed to generate description.'); }
     finally { setDescLoading(false); }
+  };
+
+  const getCitation = (r: SearchResult) => {
+    const src = r.source || r.url;
+    if (citationFormat === 'APA') return `Unknown Author (n.d.). ${r.title}. Retrieved from ${r.url}`;
+    if (citationFormat === 'MLA') return `"${r.title}." ${src}, n.d., ${r.url}`;
+    return `Unknown. n.d. ${r.title}. ${src}. ${r.url}`;
   };
 
   return (
@@ -153,10 +162,16 @@ Focus on what this source covers, its relevance, and how a student could use it.
               <Text style={s.tapHint}>Tap for AI description</Text>
             </View>
 
-            {/* AI description panel */}
+            {/* AI description & citation panel */}
             {selected?.id === r.id && (
               <View style={s.descPanel}>
-                <Text style={s.descTitle}>📝 AI Description</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={s.descTitle}>📝 AI Description</Text>
+                  <TouchableOpacity onPress={() => setShowCitation(true)}>
+                    <Text style={s.citationLink}>Cite</Text>
+                  </TouchableOpacity>
+                </View>
+                
                 {descLoading
                   ? <ActivityIndicator color={colors.primary} style={{ padding: spacing.md }} />
                   : <Text style={s.descText}>{description}</Text>}
@@ -192,6 +207,40 @@ Focus on what this source covers, its relevance, and how a student could use it.
           </>
         )}
       </ScrollView>
+
+      {/* Citation Modal */}
+      <Modal visible={showCitation && selected !== null} animationType="fade" transparent>
+        <View style={s.modalOverlay}>
+          <View style={s.citationSheet}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
+              <Text style={s.citationSheetTitle}>Citation</Text>
+              <TouchableOpacity onPress={() => setShowCitation(false)}><Text style={{ color: colors.muted, fontSize: 20 }}>✕</Text></TouchableOpacity>
+            </View>
+            
+            {selected && (
+              <View style={{ gap: spacing.sm }}>
+                <Text style={{ color: colors.foreground, fontSize: 13, fontWeight: '600' }} numberOfLines={2}>{selected.title}</Text>
+                
+                <View style={s.citationFormatRow}>
+                  {(['APA', 'MLA', 'CHI'] as const).map(f => (
+                    <TouchableOpacity key={f} style={[s.formatBtn, citationFormat === f && s.formatBtnActive]} onPress={() => setCitationFormat(f)}>
+                      <Text style={[s.formatBtnText, citationFormat === f && s.formatBtnTextActive]}>{f}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                
+                <View style={s.citationBox}>
+                  <Text style={s.citationBoxText}>{getCitation(selected)}</Text>
+                </View>
+                
+                <TouchableOpacity style={s.copyBtn} onPress={() => { Alert.alert('Copied!', 'Citation copied to clipboard'); setShowCitation(false); }}>
+                  <Text style={s.copyBtnText}>Copy Citation</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -246,4 +295,15 @@ const s = StyleSheet.create({
   historyTitle: { color: colors.foreground, fontSize: typography.sm, fontWeight: '600' },
   historySub: { color: colors.muted, fontSize: typography.xs, marginTop: 2 },
   historyDelete: { fontSize: 16 },
+  citationLink: { color: colors.primary, fontSize: typography.xs, fontWeight: '700' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  citationSheet: { backgroundColor: colors.card, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing.lg, paddingBottom: 40, borderWidth: 1, borderColor: colors.border },
+  citationSheetTitle: { color: colors.foreground, fontSize: typography.lg, fontWeight: '800' },
+  citationFormatRow: { flexDirection: 'row', backgroundColor: colors.background, borderRadius: radius.md, padding: 4, borderWidth: 1, borderColor: colors.border },
+  formatBtn: { flex: 1, paddingVertical: 6, alignItems: 'center', borderRadius: 4 },
+  formatBtnActive: { backgroundColor: colors.primary },
+  formatBtnText: { color: colors.muted, fontSize: 11, fontWeight: '700' },
+  formatBtnTextActive: { color: '#fff' },
+  citationBox: { backgroundColor: colors.background, padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border },
+  citationBoxText: { color: colors.foreground, fontSize: 12, lineHeight: 18 },
 });

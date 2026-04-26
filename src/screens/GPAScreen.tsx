@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions,
   TextInput, Modal, Alert, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LineChart } from 'react-native-chart-kit';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { getGPARecords, createGPARecord, deleteGPARecord } from '../services/gpa';
 import { GPARecord } from '../types';
@@ -36,8 +37,13 @@ export default function GPAScreen() {
 
   useEffect(() => { load(); }, []);
 
-  const highest = records.length > 0 ? Math.max(...records.map(r => r.gpa)) : 0;
-  const average = records.length > 0 ? (records.reduce((a, r) => a + r.gpa, 0) / records.length) : 0;
+  const chartData = [...records].reverse().map((r, i) => ({
+    sem: r.semester?.split(' ').slice(-2).join(' ') || `Sem ${i + 1}`,
+    gpa: Number(r.gpa)
+  }));
+  
+  const cumGPA = records.length > 0 ? (records.reduce((a, r) => a + Number(r.gpa), 0) / records.length).toFixed(2) : '0.00';
+  const totalCreditsAll = records.reduce((a, r) => a + r.totalCredits, 0);
 
   const handleSave = async () => {
     if (!semester || !gpa) { Alert.alert('Error', 'Semester and GPA required'); return; }
@@ -126,24 +132,63 @@ export default function GPAScreen() {
         {/* Summary */}
         {records.length > 0 && (
           <View style={s.summaryRow}>
-            <View style={s.summaryCard}>
-              <Text style={s.summaryValue}>{highest.toFixed(2)}</Text>
-              <Text style={s.summaryLabel}>Highest GPA</Text>
-              <Text style={s.summaryClass}>{GPA_CLASS(highest)}</Text>
+            <View style={[s.summaryCard, { backgroundColor: colors.primary, borderColor: colors.primary }]}>
+              <Text style={[s.summaryValue, { color: '#fff' }]}>{cumGPA}</Text>
+              <Text style={[s.summaryLabel, { color: '#fff', opacity: 0.8 }]}>Cumulative GPA</Text>
+              <Text style={[s.summaryClass, { color: '#fff' }]}>{GPA_CLASS(parseFloat(cumGPA))}</Text>
             </View>
             <View style={s.summaryCard}>
-              <Text style={s.summaryValue}>{average.toFixed(2)}</Text>
-              <Text style={s.summaryLabel}>Average GPA</Text>
-              <Text style={s.summaryClass}>{GPA_CLASS(average)}</Text>
+              <Text style={[s.summaryValue, { color: colors.foreground }]}>{totalCreditsAll}</Text>
+              <Text style={s.summaryLabel}>Total Credits</Text>
+              <Text style={s.summaryClass}>Across semesters</Text>
             </View>
             <View style={s.summaryCard}>
-              <Text style={s.summaryValue}>{records.length}</Text>
+              <Text style={[s.summaryValue, { color: colors.foreground }]}>{records.length}</Text>
               <Text style={s.summaryLabel}>Semesters</Text>
+              <Text style={s.summaryClass}>Logged</Text>
             </View>
           </View>
         )}
 
+        {/* Chart */}
+        <View style={s.chartCard}>
+          <View style={s.chartHeader}>
+            <Text style={s.chartTitle}>GPA Trajectory</Text>
+            <Text style={s.chartSub}>All semesters</Text>
+          </View>
+          {chartData.length > 0 ? (
+            <LineChart
+              data={{
+                labels: chartData.map(d => d.sem.substring(0, 5) + '...'),
+                datasets: [{ data: chartData.map(d => d.gpa) }]
+              }}
+              width={Dimensions.get('window').width - (spacing.md * 4)}
+              height={180}
+              withInnerLines={false}
+              withOuterLines={false}
+              yAxisInterval={1}
+              chartConfig={{
+                backgroundColor: colors.card,
+                backgroundGradientFrom: colors.card,
+                backgroundGradientTo: colors.card,
+                decimalPlaces: 2,
+                color: (opacity = 1) => `rgba(99, 102, 241, ${opacity})`, // primary color
+                labelColor: (opacity = 1) => colors.muted,
+                style: { borderRadius: 16 },
+                propsForDots: { r: '4', strokeWidth: '2', stroke: colors.primary }
+              }}
+              bezier
+              style={{ marginVertical: 8, borderRadius: 16, marginLeft: -10 }}
+            />
+          ) : (
+            <View style={s.chartEmpty}>
+              <Text style={s.emptyText}>Add records to see your trajectory</Text>
+            </View>
+          )}
+        </View>
+
         {/* Records */}
+        <Text style={s.chartTitle}>Academic History</Text>
         {records.length === 0 ? (
           <View style={s.empty}>
             <Text style={s.emptyIcon}>🎓</Text>
@@ -218,13 +263,18 @@ const s = StyleSheet.create({
   addBtnText: { color: '#fff', fontSize: typography.sm, fontWeight: '700' },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: 140 },
   summaryRow: { flexDirection: 'row', gap: spacing.sm },
-  summaryCard: { flex: 1, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  summaryCard: { flex: 1, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.sm, alignItems: 'center', borderWidth: 1, borderColor: colors.border, justifyContent: 'center' },
   summaryValue: { color: colors.primary, fontSize: typography['2xl'], fontWeight: '800' },
-  summaryLabel: { color: colors.muted, fontSize: typography.xs, marginTop: 2 },
-  summaryClass: { color: colors.foreground, fontSize: 10, fontWeight: '600', marginTop: 2 },
+  summaryLabel: { color: colors.muted, fontSize: 10, marginTop: 4, textTransform: 'uppercase', fontWeight: '600' },
+  summaryClass: { color: colors.muted, fontSize: 10, marginTop: 2 },
+  chartCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
+  chartHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
+  chartTitle: { color: colors.foreground, fontSize: typography.base, fontWeight: '700' },
+  chartSub: { color: colors.muted, fontSize: 11 },
+  chartEmpty: { height: 180, alignItems: 'center', justifyContent: 'center' },
   recordCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border, gap: spacing.sm },
   recordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  recordSemester: { color: colors.foreground, fontSize: typography.base, fontWeight: '700' },
+  recordSemester: { color: colors.foreground, fontSize: typography.sm, fontWeight: '700' },
   recordClass: { color: colors.muted, fontSize: typography.xs, marginTop: 2 },
   recordRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   recordGpa: { fontSize: typography['2xl'], fontWeight: '900' },

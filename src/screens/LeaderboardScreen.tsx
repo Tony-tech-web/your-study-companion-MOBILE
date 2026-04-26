@@ -96,19 +96,29 @@ export default function LeaderboardScreen() {
       contentContainerStyle={[s.content, { paddingTop: insets.top + spacing.sm }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
     >
-      <Text style={s.title}>Leaderboard</Text>
+      <View style={s.headerRow}>
+        <View>
+          <Text style={s.title}>Leaderboard</Text>
+          <Text style={s.subtitle}>{entries.length} students ranked globally</Text>
+        </View>
+        <View style={s.livePill}>
+          <View style={s.liveDot} />
+          <Text style={s.liveText}>Live</Text>
+        </View>
+      </View>
 
       {/* My rank card */}
-      {myRank && (
+      {myRank && myRank.rank > 3 && (
         <View style={s.myRankCard}>
-          <Text style={s.myRankLabel}>Your Rank</Text>
-          <View style={s.myRankRow}>
-            <Text style={s.myRankNum}>#{myRank.rank}</Text>
-            <View>
-              <Text style={s.myRankXp}>{myRank.xp} XP</Text>
-              <Text style={s.myRankTitle}>{myRank.title}</Text>
-            </View>
+          <Text style={s.myRankNum}>#{myRank.rank}</Text>
+          <View style={s.myRankAvatar}>
+            <Text style={s.myRankAvatarTxt}>{user?.email?.slice(0,2).toUpperCase() || 'ME'}</Text>
           </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.myRankName}>You</Text>
+            <Text style={s.myRankTitle}>{myRank.xp.toLocaleString()} XP · Level {myRank.level} · {myRank.title}</Text>
+          </View>
+          <Text style={s.myRankLabel}>Your rank</Text>
         </View>
       )}
 
@@ -148,21 +158,35 @@ export default function LeaderboardScreen() {
         </View>
       )}
 
-      {/* Rest of leaderboard */}
-      {rest.map((entry, i) => {
-        const isMe = entry.user_id === user?.id;
-        return (
-          <View key={entry.id} style={[s.row, isMe && s.rowMe]}>
-            <Text style={s.rowRank}>#{entry.rank}</Text>
-            <Image source={{ uri: entry.avatar }} style={s.rowAvatar} />
-            <View style={{ flex: 1 }}>
-              <Text style={s.rowName}>{entry.name}{isMe ? ' (You)' : ''}</Text>
-              <Text style={s.rowTitle}>{entry.title || `Level ${entry.level}`}</Text>
+      {/* Full table */}
+      <View style={s.tableWrap}>
+        <View style={s.tableHeader}>
+          <Text style={[s.tableHeadText, { width: 30 }]}>#</Text>
+          <Text style={[s.tableHeadText, { flex: 2 }]}>STUDENT</Text>
+          <Text style={[s.tableHeadText, { flex: 1.5 }]}>TITLE</Text>
+          <Text style={[s.tableHeadText, { flex: 1, textAlign: 'right' }]}>XP</Text>
+        </View>
+        {entries.map((entry, i) => {
+          const isMe = entry.user_id === user?.id;
+          return (
+            <View key={entry.id || i} style={[s.row, isMe && s.rowMe]}>
+              <View style={{ width: 30 }}>
+                {i < 3 ? <Text style={{ fontSize: 14 }}>{MEDAL[i]}</Text> : <Text style={s.rowRank}>{i + 1}</Text>}
+              </View>
+              <View style={{ flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Image source={{ uri: entry.avatar }} style={s.rowAvatar} />
+                <Text style={[s.rowName, isMe && { color: colors.primary }]} numberOfLines={1}>{entry.name}{isMe ? ' (You)' : ''}</Text>
+              </View>
+              <View style={{ flex: 1.5 }}>
+                <Text style={s.rowTitle} numberOfLines={1}>{entry.title || `Level ${entry.level}`}</Text>
+              </View>
+              <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                <Text style={s.rowXp}>{entry.xp.toLocaleString()}</Text>
+              </View>
             </View>
-            <Text style={s.rowXp}>{entry.xp} XP</Text>
-          </View>
-        );
-      })}
+          );
+        })}
+      </View>
     </ScrollView>
   );
 }
@@ -171,34 +195,46 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: 140 },
   center: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  title: { color: colors.foreground, fontSize: typography['2xl'], fontWeight: '800' },
+  title: { color: colors.foreground, fontSize: typography.xl, fontWeight: '800' },
+  subtitle: { color: colors.muted, fontSize: typography.xs, marginTop: 2 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  livePill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.green + '15', paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.full },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.green },
+  liveText: { color: colors.green, fontSize: 11, fontWeight: '600' },
   errorIcon: { fontSize: 48 },
   errorTitle: { color: colors.foreground, fontSize: typography.lg, fontWeight: '700' },
   errorText: { color: colors.muted, fontSize: typography.sm, textAlign: 'center', paddingHorizontal: spacing.lg },
   retryBtn: { backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.md },
   retryBtnText: { color: '#fff', fontWeight: '700' },
-  myRankCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.primary + '50' },
-  myRankLabel: { color: colors.muted, fontSize: typography.xs, marginBottom: spacing.sm },
-  myRankRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  myRankNum: { color: colors.primary, fontSize: typography['3xl'], fontWeight: '900' },
-  myRankXp: { color: colors.foreground, fontSize: typography.lg, fontWeight: '700' },
-  myRankTitle: { color: colors.muted, fontSize: typography.xs },
-  podium: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.lg },
+  
+  myRankCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.primary + '10', borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.primary + '30' },
+  myRankNum: { color: colors.primary, fontSize: typography.base, fontWeight: '800', width: 28 },
+  myRankAvatar: { width: 32, height: 32, borderRadius: 8, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  myRankAvatarTxt: { color: '#fff', fontSize: 10, fontWeight: '900' },
+  myRankName: { color: colors.foreground, fontSize: typography.sm, fontWeight: '700' },
+  myRankTitle: { color: colors.muted, fontSize: 11 },
+  myRankLabel: { color: colors.primary, fontSize: 11, fontWeight: '600' },
+  
+  podium: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.md, backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border },
   podiumItem: { alignItems: 'center', flex: 1 },
   podiumFirst: {},
   podiumSecond: {},
   podiumThird: {},
-  podiumMedal: { fontSize: 24, marginBottom: 4 },
-  podiumAvatar: { width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: colors.border, marginBottom: 4 },
-  podiumAvatarFirst: { width: 60, height: 60, borderRadius: 30, borderColor: colors.primary },
+  podiumMedal: { fontSize: 20, marginBottom: 8 },
+  podiumAvatar: { width: 48, height: 48, borderRadius: 16, borderWidth: 2, borderColor: colors.border, marginBottom: 8 },
+  podiumAvatarFirst: { width: 64, height: 64, borderRadius: 20, borderColor: colors.primary },
   podiumName: { color: colors.foreground, fontSize: typography.xs, fontWeight: '700', textAlign: 'center' },
-  podiumXp: { color: colors.primary, fontSize: 10, fontWeight: '600', marginBottom: 4 },
-  podiumBar: { width: '100%', backgroundColor: colors.card, borderTopLeftRadius: 4, borderTopRightRadius: 4, borderWidth: 1, borderColor: colors.border },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
-  rowMe: { borderColor: colors.primary },
-  rowRank: { color: colors.muted, fontSize: typography.sm, fontWeight: '700', width: 32 },
-  rowAvatar: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: colors.border },
-  rowName: { color: colors.foreground, fontSize: typography.sm, fontWeight: '600' },
-  rowTitle: { color: colors.muted, fontSize: typography.xs, marginTop: 1 },
-  rowXp: { color: colors.primary, fontSize: typography.sm, fontWeight: '700' },
+  podiumXp: { color: colors.primary, fontSize: 11, fontWeight: '600', marginBottom: 6 },
+  podiumBar: { width: '80%', backgroundColor: colors.background, borderTopLeftRadius: 8, borderTopRightRadius: 8, borderWidth: 1, borderColor: colors.border },
+  
+  tableWrap: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+  tableHeader: { flexDirection: 'row', backgroundColor: colors.background, paddingVertical: 10, paddingHorizontal: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
+  tableHeadText: { color: colors.muted, fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
+  rowMe: { backgroundColor: colors.primary + '10' },
+  rowRank: { color: colors.muted, fontSize: typography.xs, fontWeight: '600' },
+  rowAvatar: { width: 28, height: 28, borderRadius: 8, borderWidth: 1, borderColor: colors.border },
+  rowName: { color: colors.foreground, fontSize: typography.xs, fontWeight: '600' },
+  rowTitle: { color: colors.muted, fontSize: 10 },
+  rowXp: { color: colors.foreground, fontSize: typography.xs, fontWeight: '700' },
 });
