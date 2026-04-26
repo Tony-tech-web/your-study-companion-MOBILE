@@ -138,7 +138,7 @@ export default function AIScreen() {
   if (fetching) return <View style={s.center}><ActivityIndicator color={colors.primary} /></View>;
 
   return (
-    <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={90}>
+    <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}>
       
       {/* Model Picker Modal */}
       <Modal visible={showModelPicker} transparent animationType="fade" onRequestClose={() => setShowModelPicker(false)}>
@@ -217,7 +217,7 @@ export default function AIScreen() {
       />
 
       {/* Input Area */}
-      <View style={[s.inputContainer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+      <View style={[s.inputContainer, { paddingBottom: Math.max(insets.bottom + 90, 110) }]}>
         
         {/* Context Chips */}
         {libraryActive && (

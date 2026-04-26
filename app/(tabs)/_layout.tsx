@@ -84,8 +84,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 }
 
 const s = StyleSheet.create({
-  container: { position: 'absolute', bottom: 0, left: 24, right: 24 },
-  blurPill: { borderRadius: radius.xl, overflow: 'hidden', backgroundColor: 'rgba(15, 15, 15, 0.65)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)' },
+  container: { position: 'absolute', bottom: 0, left: 16, right: 16 },
+  blurPill: { borderRadius: 9999, overflow: 'hidden', backgroundColor: 'rgba(10, 10, 10, 0.80)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.10)' },
   mainRow: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingVertical: 10 },
   extraRow: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end', paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(255, 255, 255, 0.05)' },
   tabItem: { alignItems: 'center', justifyContent: 'center', flex: 1 },

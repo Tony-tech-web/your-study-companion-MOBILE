@@ -163,7 +163,7 @@ export default function LeaderboardScreen() {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.md, gap: spacing.md, paddingBottom: spacing.xxl },
+  content: { padding: spacing.md, gap: spacing.md, paddingBottom: 140 },
   center: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
   title: { color: colors.foreground, fontSize: typography['2xl'], fontWeight: '800' },
   errorIcon: { fontSize: 48 },
