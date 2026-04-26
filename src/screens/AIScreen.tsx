@@ -8,6 +8,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { callEdgeFunction } from '../lib/supabase';
 import { getAIConversations, saveAIConversation, clearAIConversations, AIConversationEntry } from '../services/ai';
+import { getDocuments } from '../services/documents';
+import { Document } from '../types';
 
 const cleanText = (t: string) => t.replace(/\{\{[^}]+\}\}/g, '').replace(/\*\*/g, '').trim();
 
@@ -15,12 +17,6 @@ const MODELS = [
   { id: 'google', label: 'Gemini Flash', sub: 'Fast & free' },
   { id: 'google-pro', label: 'Gemini Pro', sub: 'More capable' },
   { id: 'openrouter', label: 'GPT-4o', sub: 'OpenRouter credits' },
-];
-
-const MOCK_PDFS = [
-  { id: 'pdf1', name: 'CSC 303 Lecture 1-4.pdf', pages: 42, type: 'course' },
-  { id: 'pdf2', name: 'Biology 101 Syllabus.pdf', pages: 5, type: 'doc' },
-  { id: 'pdf3', name: 'Research Paper - AI in Edu.pdf', pages: 12, type: 'research' },
 ];
 
 type Mode = 'chat' | 'teach' | 'test';
@@ -57,9 +53,11 @@ export default function AIScreen() {
   
   // Session State
   const [activeSession, setActiveSession] = useState<ActiveSession>('none');
-  const [selectedPdf, setSelectedPdf] = useState<typeof MOCK_PDFS[0] | null>(null);
+  const [selectedPdf, setSelectedPdf] = useState<Document | null>(null);
   const [showPdfPicker, setShowPdfPicker] = useState(false);
   const [pendingSessionType, setPendingSessionType] = useState<'teach' | 'test'>('teach');
+  const [libraryDocs, setLibraryDocs] = useState<Document[]>([]);
+  const [loadingDocs, setLoadingDocs] = useState(false);
   
   const [libraryActive, setLibraryActive] = useState(false);
   const [studyToolsActive, setStudyToolsActive] = useState(false);
@@ -76,6 +74,19 @@ export default function AIScreen() {
       }] : h);
     } catch (e) { console.error(e); }
     finally { setFetching(false); }
+  };
+
+  const fetchDocs = async () => {
+    if (libraryDocs.length > 0) return; // already loaded
+    setLoadingDocs(true);
+    try {
+      const docs = await getDocuments();
+      setLibraryDocs(docs);
+    } catch (e) {
+      console.error('Failed to load PDFs:', e);
+    } finally {
+      setLoadingDocs(false);
+    }
   };
 
   const handleSend = async () => {
@@ -160,7 +171,7 @@ export default function AIScreen() {
     ]);
   };
 
-  const startSession = (pdf: typeof MOCK_PDFS[0]) => {
+  const startSession = (pdf: Document) => {
     setSelectedPdf(pdf);
     setActiveSession(pendingSessionType);
     setMode(pendingSessionType);
@@ -182,6 +193,7 @@ export default function AIScreen() {
     if (newMode === 'teach' || newMode === 'test') {
       if (activeSession === 'none') {
         setPendingSessionType(newMode);
+        fetchDocs(); // Load docs when opening modal
         setShowPdfPicker(true);
       } else {
         setMode(newMode);
@@ -275,16 +287,22 @@ export default function AIScreen() {
             <Text style={s.sheetSub}>Choose a PDF from your library to begin the session.</Text>
             
             <ScrollView style={{ maxHeight: 300, marginTop: spacing.md }}>
-              {MOCK_PDFS.map(pdf => (
-                <TouchableOpacity key={pdf.id} style={s.pdfItem} onPress={() => startSession(pdf)}>
-                  <Text style={s.pdfIcon}>📄</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={s.pdfName}>{pdf.name}</Text>
-                    <Text style={s.pdfMeta}>{pdf.pages} pages · {pdf.type}</Text>
-                  </View>
-                  <Text style={{ color: colors.primary }}>→</Text>
-                </TouchableOpacity>
-              ))}
+              {loadingDocs ? (
+                <ActivityIndicator color={colors.primary} style={{ marginTop: 20 }} />
+              ) : libraryDocs.length === 0 ? (
+                <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 20 }}>No PDFs uploaded yet.</Text>
+              ) : (
+                libraryDocs.map(pdf => (
+                  <TouchableOpacity key={pdf.id} style={s.pdfItem} onPress={() => startSession(pdf)}>
+                    <Text style={s.pdfIcon}>📄</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.pdfName}>{pdf.name}</Text>
+                      <Text style={s.pdfMeta}>{pdf.totalPages} pages · {pdf.size}</Text>
+                    </View>
+                    <Text style={{ color: colors.primary }}>→</Text>
+                  </TouchableOpacity>
+                ))
+              )}
             </ScrollView>
           </View>
         </View>

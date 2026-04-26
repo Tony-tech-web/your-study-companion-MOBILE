@@ -78,3 +78,13 @@ export interface ChatMessage {
   content: string;
   created_at: string;
 }
+
+export interface Document {
+  id: string;
+  name: string;
+  uploadedAt: string;
+  size: string;
+  category: string;
+  totalPages: number;
+  scannedPages: number;
+}
