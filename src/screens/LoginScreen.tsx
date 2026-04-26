@@ -15,10 +15,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 // ─── Social button icon (text-based, no image deps) ───────────────────────────
 const SOCIAL = [
-  { key: 'google',   label: 'G',  bg: '#fff',    border: '#e5e5e5', color: '#4285F4', bold: true },
-  { key: 'facebook', label: 'f',  bg: '#1877F2', border: '#1877F2', color: '#fff',    bold: true },
-  { key: 'x',        label: '𝕏',  bg: '#000',    border: '#000',    color: '#fff',    bold: false },
-  { key: 'apple',    label: '',   bg: '#000',    border: '#000',    color: '#fff',    bold: false },
+  { key: 'google',   label: 'Continue with Google',  bg: '#fff',    border: '#e5e5e5', color: '#4285F4', bold: true },
 ];
 
 export default function LoginScreen() {
@@ -86,8 +83,23 @@ export default function LoginScreen() {
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
         
         if (result.type === 'success' && result.url) {
-          // Parse the session out of the returned URL
-          await supabase.auth.getSessionFromUrl(result.url);
+          // Manually parse the access_token and refresh_token from the hash fragment
+          const hash = result.url.split('#')[1];
+          if (hash) {
+            const params = hash.split('&').reduce((acc, current) => {
+              const [key, value] = current.split('=');
+              acc[key] = value;
+              return acc;
+            }, {} as Record<string, string>);
+            
+            if (params.access_token && params.refresh_token) {
+              const { error: sessionError } = await supabase.auth.setSession({
+                access_token: params.access_token,
+                refresh_token: params.refresh_token,
+              });
+              if (sessionError) throw sessionError;
+            }
+          }
         }
       }
     } catch (err: any) {
@@ -218,17 +230,14 @@ export default function LoginScreen() {
               {SOCIAL.map(item => (
                 <TouchableOpacity
                   key={item.key}
-                  style={[s.socialBtn, { backgroundColor: item.bg, borderColor: item.border }]}
-                  onPress={() => {
-                    if (item.key === 'google') handleGoogleAuth();
-                    else Alert.alert('Coming Soon', `${item.label} login coming soon`);
-                  }}
+                  style={[s.socialBtn, { backgroundColor: item.bg, borderColor: item.border, flex: undefined, paddingHorizontal: spacing.xl }]}
+                  onPress={handleGoogleAuth}
                   disabled={loading}
                   activeOpacity={0.75}
                 >
                   <Text style={[
                     s.socialBtnText,
-                    { color: item.color, fontWeight: item.bold ? '700' : '400' },
+                    { color: item.color, fontWeight: item.bold ? '700' : '400', fontSize: typography.base },
                   ]}>
                     {item.label}
                   </Text>
