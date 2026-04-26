@@ -66,6 +66,7 @@ export default function AIScreen() {
       const res = await callEdgeFunction('ai-chat', {
         messages: [...history, { role: 'user', content: text }],
         providerId: model,
+        mode: 'chat',
       });
 
       if (!res.ok) {

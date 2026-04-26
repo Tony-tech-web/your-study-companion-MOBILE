@@ -44,7 +44,7 @@ export default function LoginScreen() {
             <View style={s.logoRing}>
               <View style={s.logoInner}><Text style={s.logoText}>SC</Text></View>
             </View>
-            <Text style={s.appName}>Study Companion</Text>
+            <Text style={s.appName}>Orbit</Text>
             <Text style={s.appTagline}>Your AI-powered academic edge</Text>
           </View>
 

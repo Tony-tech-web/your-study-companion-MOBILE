@@ -4,14 +4,13 @@ import {
   TextInput, ActivityIndicator, RefreshControl, Alert, Linking,
 } from 'react-native';
 import { colors, spacing, radius, typography } from '../lib/theme';
+import { searchResearch, getResearchHistory, deleteResearchEntry } from '../services/research';
 import { callEdgeFunction } from '../lib/supabase';
-import { getResearchHistory, deleteResearchEntry } from '../services/research';
 import { ResearchPaper } from '../types';
 
-interface SearchResult { id: string; title: string; snippet: string; url: string; source: string; isGitHub?: boolean; }
 interface AIInsights { insights: string; gaps: string[]; relatedTopics: string[]; }
 
-const MODES = [{ id: 'academic', label: '📄 Academic' }, { id: 'projects', label: '💻 Projects' }];
+const MODES = [{ id: 'academic', label: 'Academic' }, { id: 'projects', label: 'Projects' }];
 
 export default function ResearchScreen() {
   const [query, setQuery] = useState('');
@@ -34,9 +33,7 @@ export default function ResearchScreen() {
     if (!query.trim() || searching) return;
     setSearching(true); setResults([]); setInsights(null); setSelected(null); setDescription(''); setError('');
     try {
-      const res = await callEdgeFunction('research-search', { query: query.trim(), searchMode: mode });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Search failed'); }
-      const data = await res.json();
+      const data = await searchResearch(query.trim(), mode);
       setResults(data.results || []);
       if (data.insights || data.gaps) setInsights({ insights: data.insights || '', gaps: data.gaps || [], relatedTopics: data.relatedTopics || [] });
     } catch (e: any) {

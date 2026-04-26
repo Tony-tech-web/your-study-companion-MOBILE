@@ -9,7 +9,7 @@ import { StudyPlan } from '../types';
 import { callEdgeFunction } from '../lib/supabase';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 
-type View = 'list' | 'calendar' | 'detail';
+type ViewMode = 'list' | 'calendar' | 'detail';
 
 interface ScheduleTask { subject: string; duration: string; focus: string; }
 interface ScheduleDay { day: string; date: string; tasks: ScheduleTask[]; }
@@ -20,7 +20,7 @@ export default function PlannerScreen() {
   const [plans, setPlans] = useState<StudyPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [view, setView] = useState<View>('list');
+  const [view, setView] = useState<ViewMode>('list');
   const [selected, setSelected] = useState<StudyPlan | null>(null);
   const [schedule, setSchedule] = useState<ScheduleDay[]>([]);
   const [genLoading, setGenLoading] = useState(false);
