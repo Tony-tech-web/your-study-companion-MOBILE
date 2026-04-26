@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { getFullDashboardStats, getTasks, getActivity, FullStats } from '../services/dashboard';
@@ -31,6 +32,7 @@ const ActivityBar = ({ day, hours, max }: { day: string; hours: number; max: num
 };
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const { user, signOut } = useAuth();
   const insets = useSafeAreaInsets();
   const [stats, setStats] = useState<FullStats | null>(null);
@@ -136,6 +138,23 @@ export default function DashboardScreen() {
         <StatCard label="Research" value={`${stats?.researchMinutes || 0}m`} />
       </View>
 
+      {/* Quick Actions */}
+      <View style={s.section}>
+        <Text style={s.sectionTitle}>Quick Actions</Text>
+        <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+          <TouchableOpacity style={s.quickBtn} onPress={() => router.push('/courses' as any)}>
+            <Text style={{ fontSize: 24, marginBottom: 8 }}>📚</Text>
+            <Text style={s.quickBtnTitle}>PDF Library</Text>
+            <Text style={s.quickBtnSub}>Manage your docs</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.quickBtn} onPress={() => router.push('/ai' as any)}>
+            <Text style={{ fontSize: 24, marginBottom: 8 }}>✨</Text>
+            <Text style={s.quickBtnTitle}>Orbit AI</Text>
+            <Text style={s.quickBtnSub}>Start a session</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {/* Activity Chart */}
       <View style={s.section}>
         <Text style={s.sectionTitle}>Weekly Activity</Text>
@@ -206,4 +225,7 @@ const s = StyleSheet.create({
   taskSub: { color: colors.muted, fontSize: typography.xs, marginTop: 2 },
   emptyWrap: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.xl, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   emptyText: { color: colors.muted, fontSize: typography.sm },
+  quickBtn: { flex: 1, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
+  quickBtnTitle: { color: colors.foreground, fontSize: typography.sm, fontWeight: '700' },
+  quickBtnSub: { color: colors.muted, fontSize: 11, marginTop: 2 },
 });

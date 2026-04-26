@@ -123,6 +123,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="gpa" />
       <Tabs.Screen name="research" />
       <Tabs.Screen name="leaderboard" />
+      <Tabs.Screen name="courses" options={{ href: null }} />
     </Tabs>
   );
 }
