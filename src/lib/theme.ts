@@ -1,6 +1,6 @@
 export const colors = {
   // Dark theme
-  primary: '#82b9d8', // Light blue from reference image
+  primary: '#f27d26',
   background: '#0a0a0a',
   card: '#141414',
   border: '#222222',
@@ -30,18 +30,18 @@ export const typography = {
 
 export const shadow = {
   sm: {
-    shadowColor: '#82b9d8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   md: {
-    shadowColor: '#82b9d8',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
   },
 };
 

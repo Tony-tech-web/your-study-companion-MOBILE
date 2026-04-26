@@ -7,6 +7,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
 import { colors, spacing, radius, typography } from '../lib/theme';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
+
+// To ensure auth session can complete successfully on returning to app
+WebBrowser.maybeCompleteAuthSession();
 
 // ─── Social button icon (text-based, no image deps) ───────────────────────────
 const SOCIAL = [
@@ -57,6 +62,36 @@ export default function LoginScreen() {
       }
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Authentication failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    try {
+      setLoading(true);
+      const redirectUrl = Linking.createURL('/');
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true, // We must handle the browser redirect manually in RN
+        },
+      });
+
+      if (error) throw error;
+      
+      if (data?.url) {
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+        
+        if (result.type === 'success' && result.url) {
+          // Parse the session out of the returned URL
+          await supabase.auth.getSessionFromUrl(result.url);
+        }
+      }
+    } catch (err: any) {
+      Alert.alert('Google Login Failed', err.message);
     } finally {
       setLoading(false);
     }
@@ -184,7 +219,11 @@ export default function LoginScreen() {
                 <TouchableOpacity
                   key={item.key}
                   style={[s.socialBtn, { backgroundColor: item.bg, borderColor: item.border }]}
-                  onPress={() => Alert.alert('Coming Soon', 'Social login coming soon')}
+                  onPress={() => {
+                    if (item.key === 'google') handleGoogleAuth();
+                    else Alert.alert('Coming Soon', `${item.label} login coming soon`);
+                  }}
+                  disabled={loading}
                   activeOpacity={0.75}
                 >
                   <Text style={[

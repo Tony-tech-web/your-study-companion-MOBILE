@@ -1,10 +1,9 @@
 import { Tabs } from 'expo-router';
 import { colors, radius } from '../../src/lib/theme';
-import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 const TAB_ICONS: Record<string, string> = {
   index: '🏠', ai: '✨', planner: '📅', gpa: '🎓', research: '🔍', leaderboard: '🏆',
@@ -20,21 +19,28 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   const MAIN_TABS = ['index', 'ai', 'planner'];
   const EXTRA_TABS = ['gpa', 'research', 'leaderboard'];
 
-  const expandHeight = useSharedValue(0);
-  const expandOpacity = useSharedValue(0);
+  const expandAnim = useRef(new Animated.Value(0)).current;
 
   const toggleExpand = () => {
     const next = !expanded;
     setExpanded(next);
-    expandHeight.value = withSpring(next ? 76 : 0, { damping: 18, stiffness: 200 });
-    expandOpacity.value = withTiming(next ? 1 : 0, { duration: 150 });
+    Animated.spring(expandAnim, {
+      toValue: next ? 1 : 0,
+      friction: 8,
+      tension: 50,
+      useNativeDriver: false,
+    }).start();
   };
 
-  const animatedExtra = useAnimatedStyle(() => ({
-    height: expandHeight.value,
-    opacity: expandOpacity.value,
-    overflow: 'hidden',
-  }));
+  const expandHeight = expandAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 76]
+  });
+  
+  const expandOpacity = expandAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1]
+  });
 
   const renderTab = (route: any, isExtra = false) => {
     const isFocused = state.index === state.routes.findIndex((r: any) => r.key === route.key);
@@ -60,7 +66,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   return (
     <View style={[s.container, { paddingBottom: Math.max(insets.bottom, 16) }]}>
       <BlurView intensity={80} tint="dark" style={s.blurPill}>
-        <Animated.View style={[s.extraRow, animatedExtra]}>
+        <Animated.View style={[s.extraRow, { height: expandHeight, opacity: expandOpacity, overflow: 'hidden' }]}>
           {extraRoutes.map((r: any) => renderTab(r, true))}
         </Animated.View>
         <View style={s.mainRow}>
