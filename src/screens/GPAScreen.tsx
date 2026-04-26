@@ -203,8 +203,8 @@ export default function GPAScreen() {
                 <Text style={s.recordClass}>{record.class}</Text>
               </View>
               <View style={s.recordRight}>
-                <Text style={[s.recordGpa, { color: record.gpa >= 3.5 ? colors.green : record.gpa >= 2.4 ? colors.primary : colors.red }]}>
-                  {record.gpa.toFixed(2)}
+                <Text style={[s.recordGpa, { color: Number(record.gpa || 0) >= 3.5 ? colors.green : Number(record.gpa || 0) >= 2.4 ? colors.primary : colors.red }]}>
+                  {Number(record.gpa || 0).toFixed(2)}
                 </Text>
                 <TouchableOpacity onPress={() => handleDelete(record.id)}>
                   <Text style={s.deleteText}>🗑</Text>
@@ -221,7 +221,7 @@ export default function GPAScreen() {
             )}
             {/* GPA bar */}
             <View style={s.gpaTrack}>
-              <View style={[s.gpaFill, { width: `${(record.gpa / 5) * 100}%`, backgroundColor: record.gpa >= 3.5 ? colors.green : record.gpa >= 2.4 ? colors.primary : colors.red }]} />
+              <View style={[s.gpaFill, { width: `${(Number(record.gpa || 0) / 5) * 100}%`, backgroundColor: Number(record.gpa || 0) >= 3.5 ? colors.green : Number(record.gpa || 0) >= 2.4 ? colors.primary : colors.red }]} />
             </View>
           </View>
         ))}

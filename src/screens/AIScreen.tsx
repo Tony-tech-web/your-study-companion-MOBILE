@@ -8,10 +8,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { callEdgeFunction } from '../lib/supabase';
 import { getAIConversations, saveAIConversation, clearAIConversations, AIConversationEntry } from '../services/ai';
-import { getDocuments } from '../services/documents';
 import { Document } from '../types';
 
-const cleanText = (t: string) => t.replace(/\{\{[^}]+\}\}/g, '').replace(/\*\*/g, '').trim();
+import LibraryPanel from '../components/AI/LibraryPanel';
+import StudyToolsPanel from '../components/AI/StudyToolsPanel';
+
+const cleanText = (t: string) => t.replace(/\\{\\{[^}]+\\}\\}/g, '').replace(/\\*\\*/g, '').trim();
 
 const MODELS = [
   { id: 'google', label: 'Gemini Flash', sub: 'Fast & free' },
@@ -45,22 +47,24 @@ export default function AIScreen() {
   const flatRef = useRef<FlatList>(null);
   const insets = useSafeAreaInsets();
 
-  // New UI State
+  // Settings
   const [model, setModel] = useState('google');
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [autoSwitch, setAutoSwitch] = useState(true);
   const [mode, setMode] = useState<Mode>('chat');
   
-  // Session State
-  const [activeSession, setActiveSession] = useState<ActiveSession>('none');
-  const [selectedPdf, setSelectedPdf] = useState<Document | null>(null);
-  const [showPdfPicker, setShowPdfPicker] = useState(false);
-  const [pendingSessionType, setPendingSessionType] = useState<'teach' | 'test'>('teach');
-  const [libraryDocs, setLibraryDocs] = useState<Document[]>([]);
-  const [loadingDocs, setLoadingDocs] = useState(false);
-  
+  // Library Context State
   const [libraryActive, setLibraryActive] = useState(false);
+  const [pdfContext, setPdfContext] = useState('');
+  const [pdfPages, setPdfPages] = useState<string[]>([]);
+  const [activeDocs, setActiveDocs] = useState<Document[]>([]);
+
+  // Study Tools State
   const [studyToolsActive, setStudyToolsActive] = useState(false);
+
+  // Teach / Test Session State
+  const [activeSession, setActiveSession] = useState<ActiveSession>('none');
+  const [teachSession, setTeachSession] = useState({ currentPage: 1, totalPages: 1, chunkSize: 5 });
 
   useEffect(() => { loadHistory(); }, []);
 
@@ -76,33 +80,37 @@ export default function AIScreen() {
     finally { setFetching(false); }
   };
 
-  const fetchDocs = async () => {
-    if (libraryDocs.length > 0) return; // already loaded
-    setLoadingDocs(true);
-    try {
-      const docs = await getDocuments();
-      setLibraryDocs(docs);
-    } catch (e) {
-      console.error('Failed to load PDFs:', e);
-    } finally {
-      setLoadingDocs(false);
-    }
-  };
-
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
-    const text = input.trim();
-    setInput(''); setLoading(true); setStreaming('');
+  const handleSend = async (overrideText?: string) => {
+    const text = overrideText || input.trim();
+    if (!text || loading) return;
+    
+    if (!overrideText) setInput(''); 
+    setLoading(true); setStreaming('');
+    
     try {
       const userMsg = await saveAIConversation('user', text);
       setMessages(prev => [...prev, userMsg]);
       setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
 
       const history = messages.slice(-8).map(m => ({ role: m.role, content: m.content }));
+      
+      // Handle Teach mode context chunking
+      let currentPdfContext = pdfContext;
+      let scanProgress = undefined;
+
+      if (activeSession === 'teach' && pdfPages.length > 0) {
+        const start = teachSession.currentPage - 1;
+        const end = Math.min(start + teachSession.chunkSize, teachSession.totalPages);
+        currentPdfContext = pdfPages.slice(start, end).join('\\n\\n');
+        scanProgress = { current: end, total: teachSession.totalPages };
+      }
+
       const res = await callEdgeFunction('ai-chat', {
         messages: [...history, { role: 'user', content: text }],
         providerId: model,
-        mode: 'chat',
+        mode: activeSession !== 'none' ? activeSession : 'chat',
+        pdfContext: currentPdfContext,
+        scanProgress,
       });
 
       if (!res.ok) {
@@ -118,7 +126,7 @@ export default function AIScreen() {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          for (const line of decoder.decode(value, { stream: true }).split('\n')) {
+          for (const line of decoder.decode(value, { stream: true }).split('\\n')) {
             if (line.startsWith('data: ') && !line.includes('[DONE]')) {
               try {
                 const delta = JSON.parse(line.slice(6)).choices?.[0]?.delta?.content || '';
@@ -147,6 +155,16 @@ export default function AIScreen() {
     }
   };
 
+  const advanceTeachSession = () => {
+    const nextStart = teachSession.currentPage + teachSession.chunkSize;
+    if (nextStart > teachSession.totalPages) {
+      handleEndSession();
+      return;
+    }
+    setTeachSession(prev => ({ ...prev, currentPage: nextStart }));
+    handleSend(`Please continue teaching me from page ${nextStart}.`);
+  };
+
   const handleClear = () => {
     Alert.alert('Clear History', 'Delete all conversation history?', [
       { text: 'Cancel', style: 'cancel' },
@@ -160,41 +178,37 @@ export default function AIScreen() {
   };
 
   const handleEndSession = () => {
-    Alert.alert('End Session', 'Are you sure you want to end this study session?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'End', style: 'destructive', onPress: () => {
-        setActiveSession('none');
-        setSelectedPdf(null);
-        setMode('chat');
-        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: 'Session ended. Back to normal chat.', created_at: new Date().toISOString() }]);
-      }}
-    ]);
+    setActiveSession('none');
+    setMode('chat');
+    setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: 'Session ended. Back to normal chat.', created_at: new Date().toISOString() }]);
   };
 
-  const startSession = (pdf: Document) => {
-    setSelectedPdf(pdf);
-    setActiveSession(pendingSessionType);
-    setMode(pendingSessionType);
-    setShowPdfPicker(false);
+  const startSession = (type: ActiveSession) => {
+    if (!pdfContext) {
+      Alert.alert('No Document Context', 'Please open the Library panel and select a document first.');
+      return;
+    }
     
-    const initMsg = pendingSessionType === 'teach' 
-      ? `I've loaded "${pdf.name}". I'll teach you this material. What part would you like to start with?`
-      : `Test mode active for "${pdf.name}". I'll quiz you on the contents. Ready for the first question?`;
-      
-    setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: initMsg, created_at: new Date().toISOString() }]);
+    setActiveSession(type);
+    setMode(type);
+    
+    if (type === 'teach') {
+      setTeachSession({ currentPage: 1, totalPages: pdfPages.length || 1, chunkSize: 5 });
+      handleSend(`Please teach me this material starting from page 1.`);
+    } else if (type === 'test') {
+      handleSend(`Please test me on the provided material.`);
+    }
   };
 
   const handleModeSelect = (newMode: Mode) => {
-    if (activeSession !== 'none' && newMode !== activeSession) {
+    if (activeSession !== 'none' && newMode !== activeSession && newMode !== 'chat') {
       Alert.alert('Active Session', 'You must end your current session to switch modes.');
       return;
     }
     
     if (newMode === 'teach' || newMode === 'test') {
       if (activeSession === 'none') {
-        setPendingSessionType(newMode);
-        fetchDocs(); // Load docs when opening modal
-        setShowPdfPicker(true);
+        startSession(newMode);
       } else {
         setMode(newMode);
       }
@@ -226,20 +240,6 @@ export default function AIScreen() {
               <View style={{ width: '40%', height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.25 }} />
             </View>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
-            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.border, opacity: 0.35 }} />
-            <View style={{ flex: 1, gap: 6 }}>
-              <View style={{ width: '60%', height: 12, borderRadius: 4, backgroundColor: colors.border, opacity: 0.4 }} />
-              <View style={{ width: '40%', height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.25 }} />
-            </View>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
-            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.border, opacity: 0.35 }} />
-            <View style={{ flex: 1, gap: 6 }}>
-              <View style={{ width: '60%', height: 12, borderRadius: 4, backgroundColor: colors.border, opacity: 0.4 }} />
-              <View style={{ width: '40%', height: 10, borderRadius: 4, backgroundColor: colors.border, opacity: 0.25 }} />
-            </View>
-          </View>
       </View>
     </View>
   );
@@ -247,6 +247,22 @@ export default function AIScreen() {
   return (
     <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}>
       
+      {/* Side Panels */}
+      <LibraryPanel 
+        visible={libraryActive} 
+        onClose={() => setLibraryActive(false)} 
+        onPdfsExtracted={(text, pages, docs) => {
+          setPdfContext(text);
+          setPdfPages(pages);
+          setActiveDocs(docs);
+        }}
+      />
+      <StudyToolsPanel 
+        visible={studyToolsActive} 
+        onClose={() => setStudyToolsActive(false)} 
+        pdfContext={pdfContext} 
+      />
+
       {/* Model Picker Modal */}
       <Modal visible={showModelPicker} transparent animationType="fade" onRequestClose={() => setShowModelPicker(false)}>
         <TouchableOpacity style={s.modalOverlay} activeOpacity={1} onPress={() => setShowModelPicker(false)}>
@@ -271,41 +287,6 @@ export default function AIScreen() {
             ))}
           </View>
         </TouchableOpacity>
-      </Modal>
-
-      {/* PDF Picker Modal */}
-      <Modal visible={showPdfPicker} transparent animationType="slide" onRequestClose={() => setShowPdfPicker(false)}>
-        <View style={s.bottomSheetOverlay}>
-          <TouchableOpacity style={{ flex: 1 }} onPress={() => setShowPdfPicker(false)} activeOpacity={1} />
-          <View style={s.bottomSheet}>
-            <View style={s.sheetHeader}>
-              <Text style={s.sheetTitle}>Select Material for {pendingSessionType === 'teach' ? 'Teaching' : 'Testing'}</Text>
-              <TouchableOpacity onPress={() => setShowPdfPicker(false)}>
-                <Text style={s.sheetClose}>✕</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={s.sheetSub}>Choose a PDF from your library to begin the session.</Text>
-            
-            <ScrollView style={{ maxHeight: 300, marginTop: spacing.md }}>
-              {loadingDocs ? (
-                <ActivityIndicator color={colors.primary} style={{ marginTop: 20 }} />
-              ) : libraryDocs.length === 0 ? (
-                <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 20 }}>No PDFs uploaded yet.</Text>
-              ) : (
-                libraryDocs.map(pdf => (
-                  <TouchableOpacity key={pdf.id} style={s.pdfItem} onPress={() => startSession(pdf)}>
-                    <Text style={s.pdfIcon}>📄</Text>
-                    <View style={{ flex: 1 }}>
-                      <Text style={s.pdfName}>{pdf.name}</Text>
-                      <Text style={s.pdfMeta}>{pdf.totalPages} pages · {pdf.size}</Text>
-                    </View>
-                    <Text style={{ color: colors.primary }}>→</Text>
-                  </TouchableOpacity>
-                ))
-              )}
-            </ScrollView>
-          </View>
-        </View>
       </Modal>
 
       {/* Header */}
@@ -373,6 +354,20 @@ export default function AIScreen() {
                 </View>
               </View>
             ) : null}
+            
+            {/* Teach Session Controls */}
+            {activeSession === 'teach' && !loading && !streaming && (
+              <View style={s.teachControls}>
+                <Text style={s.teachProgressText}>
+                  Progress: Page {teachSession.currentPage} to {Math.min(teachSession.currentPage + teachSession.chunkSize - 1, teachSession.totalPages)} of {teachSession.totalPages}
+                </Text>
+                <TouchableOpacity style={s.teachAdvanceBtn} onPress={advanceTeachSession}>
+                  <Text style={s.teachAdvanceBtnText}>
+                    {teachSession.currentPage + teachSession.chunkSize > teachSession.totalPages ? 'Finish Session' : 'Proceed to Next Pages'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </>
         }
       />
@@ -381,13 +376,21 @@ export default function AIScreen() {
       <View style={[s.inputContainer, { paddingBottom: Math.max(insets.bottom + 90, 110) }]}>
         
         {/* Context Chips */}
-        {libraryActive && (
+        {activeDocs.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.contextArea} contentContainerStyle={{ gap: 8, paddingHorizontal: spacing.md }}>
-            <View style={s.contextChip}>
-              <Text style={s.contextChipIcon}>📄</Text>
-              <Text style={s.contextChipText} numberOfLines={1}>CSC 303 NOTE.pdf</Text>
-              <TouchableOpacity style={s.contextChipClose}><Text style={s.contextChipCloseText}>✕</Text></TouchableOpacity>
-            </View>
+            {activeDocs.map(doc => (
+              <View key={doc.id} style={s.contextChip}>
+                <Text style={s.contextChipIcon}>📄</Text>
+                <Text style={s.contextChipText} numberOfLines={1}>{doc.name}</Text>
+                <TouchableOpacity style={s.contextChipClose} onPress={() => {
+                  const newDocs = activeDocs.filter(d => d.id !== doc.id);
+                  setActiveDocs(newDocs);
+                  if (newDocs.length === 0) setPdfContext('');
+                }}>
+                  <Text style={s.contextChipCloseText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
           </ScrollView>
         )}
 
@@ -405,12 +408,12 @@ export default function AIScreen() {
             </TouchableOpacity>
           </View>
           <View style={s.actionRight}>
-            <TouchableOpacity style={[s.actionBtn, libraryActive && s.actionBtnActiveDark]} onPress={() => setLibraryActive(!libraryActive)}>
-              <Text style={[s.actionBtnText, libraryActive && s.actionBtnTextActive]}>📖 Library</Text>
-              {libraryActive && <View style={s.badge}><Text style={s.badgeText}>1</Text></View>}
+            <TouchableOpacity style={[s.actionBtn, pdfContext.length > 0 && s.actionBtnActiveDark]} onPress={() => setLibraryActive(true)}>
+              <Text style={[s.actionBtnText, pdfContext.length > 0 && s.actionBtnTextActive]}>📖 Library</Text>
+              {pdfContext.length > 0 && <View style={s.badge}><Text style={s.badgeText}>{activeDocs.length}</Text></View>}
             </TouchableOpacity>
-            <TouchableOpacity style={[s.actionBtn, studyToolsActive && s.actionBtnActiveDark]} onPress={() => setStudyToolsActive(!studyToolsActive)}>
-              <Text style={[s.actionBtnText, studyToolsActive && s.actionBtnTextActive]}>🧰 Study Tools</Text>
+            <TouchableOpacity style={[s.actionBtn]} onPress={() => setStudyToolsActive(true)}>
+              <Text style={[s.actionBtnText]}>🧰 Study Tools</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -422,15 +425,12 @@ export default function AIScreen() {
             placeholder={mode === 'chat' ? "Ask Orbit anything..." : mode === 'teach' ? "What should I explain from your PDFs?" : "Ready? I'll quiz you on your material."}
             placeholderTextColor={colors.muted}
             multiline maxLength={2000}
-            onSubmitEditing={handleSend} returnKeyType="send"
+            onSubmitEditing={() => handleSend()} returnKeyType="send"
           />
-          <TouchableOpacity style={[s.sendBtn, (!input.trim() || loading) && s.sendBtnDisabled]} onPress={handleSend} disabled={!input.trim() || loading}>
+          <TouchableOpacity style={[s.sendBtn, (!input.trim() || loading) && s.sendBtnDisabled]} onPress={() => handleSend()} disabled={!input.trim() || loading}>
             <Text style={s.sendBtnText}>➤</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Footer */}
-        <Text style={s.footerText}>Powered by Supabase Edge · OpenRouter</Text>
       </View>
     </KeyboardAvoidingView>
   );
@@ -467,17 +467,6 @@ const s = StyleSheet.create({
   modelOptionLabel: { color: colors.foreground, fontSize: typography.sm, fontWeight: '600' },
   modelOptionSub: { color: colors.muted, fontSize: 11, marginTop: 2 },
   
-  bottomSheetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  bottomSheet: { backgroundColor: colors.card, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing.lg, paddingBottom: spacing.xxl, borderWidth: 1, borderColor: colors.border },
-  sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  sheetTitle: { color: colors.foreground, fontSize: typography.lg, fontWeight: '800' },
-  sheetClose: { color: colors.muted, fontSize: 24, fontWeight: '300' },
-  sheetSub: { color: colors.muted, fontSize: typography.sm },
-  pdfItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.background, padding: spacing.md, borderRadius: radius.lg, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border },
-  pdfIcon: { fontSize: 24 },
-  pdfName: { color: colors.foreground, fontSize: typography.sm, fontWeight: '600', marginBottom: 2 },
-  pdfMeta: { color: colors.muted, fontSize: typography.xs },
-
   // Messages
   list: { padding: spacing.md, gap: spacing.md, paddingBottom: spacing.xxl },
   msgRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
@@ -493,6 +482,11 @@ const s = StyleSheet.create({
   bubbleText: { color: colors.foreground, fontSize: typography.sm, lineHeight: 22 },
   bubbleTextUser: { color: '#fff' },
   cursor: { color: colors.primary },
+
+  teachControls: { alignItems: 'center', marginTop: spacing.md, padding: spacing.md, backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border },
+  teachProgressText: { color: colors.muted, fontSize: typography.sm, fontWeight: '600', marginBottom: spacing.sm },
+  teachAdvanceBtn: { backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.full },
+  teachAdvanceBtnText: { color: '#fff', fontSize: typography.sm, fontWeight: '700' },
 
   // Input Area
   inputContainer: { backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.md },
@@ -524,6 +518,4 @@ const s = StyleSheet.create({
   sendBtn: { width: 44, height: 44, borderRadius: radius.lg, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   sendBtnDisabled: { opacity: 0.3 },
   sendBtnText: { color: colors.primary, fontSize: typography.lg, fontWeight: '800', transform: [{ rotate: '-45deg' }], marginLeft: 2, marginTop: 2 },
-  
-  footerText: { textAlign: 'center', color: colors.muted, fontSize: 10, opacity: 0.6, marginTop: 4 },
 });
