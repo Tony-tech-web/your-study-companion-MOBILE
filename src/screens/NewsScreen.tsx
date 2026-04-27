@@ -63,7 +63,7 @@ export default function NewsScreen() {
       </ScrollView>
 
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={colors.primary} />}
-        contentContainerStyle={{ padding: spacing.md, gap: 12 }}>
+        contentContainerStyle={{ padding: spacing.md, paddingBottom: 110, gap: 12 }}>
         {loading
           ? [0, 1, 2, 3].map(i => <SkeletonCard key={i} />)
           : filtered.map((item, i) => (
