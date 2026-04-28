@@ -3,6 +3,8 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   TextInput, ActivityIndicator, RefreshControl, Alert, Linking,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import * as Clipboard from 'expo-clipboard';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { searchResearch, getResearchHistory, deleteResearchEntry, SearchResult } from '../services/research';
 import { callEdgeFunction } from '../lib/supabase';
@@ -111,7 +113,7 @@ Focus on what this source covers, its relevance, and how a student could use it.
         {/* AI Insights */}
         {insights && (
           <View style={s.insightsCard}>
-            <Text style={s.insightsTitle}>✨ AI Summary</Text>
+            <Text style={s.insightsTitle}> AI Summary</Text>
             {insights.insights && <Text style={s.insightsText}>{insights.insights}</Text>}
             {insights.gaps.length > 0 && (
               <>
@@ -140,7 +142,7 @@ Focus on what this source covers, its relevance, and how a student could use it.
             <View style={s.resultHeader}>
               <Text style={s.resultTitle} numberOfLines={2}>{r.title}</Text>
               <TouchableOpacity onPress={() => r.url && Linking.openURL(r.url)}>
-                <Text style={s.resultLink}>↗</Text>
+                <Text style={s.resultLink}></Text>
               </TouchableOpacity>
             </View>
             <Text style={s.resultSnippet} numberOfLines={2}>{r.snippet}</Text>
@@ -154,12 +156,12 @@ Focus on what this source covers, its relevance, and how a student could use it.
             {/* AI description panel */}
             {selected?.id === r.id && (
               <View style={s.descPanel}>
-                <Text style={s.descTitle}>📝 AI Description</Text>
+                <Text style={s.descTitle}> AI Description</Text>
                 {descLoading
                   ? <ActivityIndicator color={colors.primary} style={{ padding: spacing.md }} />
                   : <Text style={s.descText}>{description}</Text>}
                 {description && (
-                  <TouchableOpacity style={s.copyBtn} onPress={() => Alert.alert('Copied!', description)}>
+                  <TouchableOpacity style={s.copyBtn} onPress={() => Clipboard.setStringAsync(description)}>
                     <Text style={s.copyBtnText}>Copy Description</Text>
                   </TouchableOpacity>
                 )}
@@ -171,7 +173,7 @@ Focus on what this source covers, its relevance, and how a student could use it.
         {/* History */}
         {results.length === 0 && !searching && (
           <>
-            <Text style={s.sectionTitle}>🕐 Recent Searches</Text>
+            <Text style={s.sectionTitle}> Recent Searches</Text>
             {loadingHistory
               ? <ActivityIndicator color={colors.primary} />
               : history.length === 0
@@ -183,7 +185,7 @@ Focus on what this source covers, its relevance, and how a student could use it.
                       <Text style={s.historySub} numberOfLines={1}>{h.abstract}</Text>
                     </View>
                     <TouchableOpacity onPress={() => deleteResearchEntry(h.id).then(() => setHistory(p => p.filter(x => x.id !== h.id)))}>
-                      <Text style={s.historyDelete}>🗑</Text>
+                      <Text style={s.historyDelete}></Text>
                     </TouchableOpacity>
                   </TouchableOpacity>
                 ))}

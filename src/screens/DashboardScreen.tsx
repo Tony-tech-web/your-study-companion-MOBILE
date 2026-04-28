@@ -29,7 +29,7 @@ const ActivityBar = ({ day, hours, max }: { day: string; hours: number; max: num
 };
 
 export default function DashboardScreen() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [stats, setStats] = useState<FullStats | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [activity, setActivity] = useState<StudyActivity[]>([]);

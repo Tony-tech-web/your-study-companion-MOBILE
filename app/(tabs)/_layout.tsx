@@ -14,6 +14,7 @@ const icons: Record<string, string> = {
   research:     'M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z',
   chat:         'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z',
   news:         'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l6 6v8a2 2 0 01-2 2z',
+  courses:      'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253z',
   leaderboard:  'M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z',
 };
 
@@ -80,6 +81,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="research" />
       <Tabs.Screen name="chat" />
       <Tabs.Screen name="news" />
+      <Tabs.Screen name="courses" />
       <Tabs.Screen name="leaderboard" />
     </Tabs>
   );
