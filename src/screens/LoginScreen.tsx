@@ -2,21 +2,19 @@ import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
-  Alert,
+  SafeAreaView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
 import { colors, spacing, radius, typography } from '../lib/theme';
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
 
-// To ensure auth session can complete successfully on returning to app
-WebBrowser.maybeCompleteAuthSession();
-
-// ─── Social button icon (text-based, no image deps) ───────────────────────────
-const SOCIAL = [
-  { key: 'google',   label: 'Continue with Google',  bg: '#fff',    border: '#e5e5e5', color: '#4285F4', bold: true },
-];
+const ErrorBanner = ({ msg }: { msg: string }) => msg ? (
+  <View style={eb.wrap}><Text style={eb.text}>{msg}</Text></View>
+) : null;
+const eb = StyleSheet.create({
+  wrap: { backgroundColor: colors.red + '18', borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.red + '30', marginBottom: spacing.md },
+  text: { color: colors.red, fontSize: typography.xs, lineHeight: 18 },
+});
 
 export default function LoginScreen() {
   const [mode, setMode]         = useState<'login' | 'signup'>('login');
@@ -24,14 +22,13 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading]   = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleAuth = async () => {
-    if (!email || !password) {
-      Alert.alert('Missing fields', 'Please enter your email and password.');
-      return;
-    }
-    setLoading(true);
+    if (!email || !password) { setError('Please enter your email and password'); return; }
+    setLoading(true); setError(''); setSuccess('');
     try {
       if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({
@@ -40,215 +37,99 @@ export default function LoginScreen() {
         });
         if (error) throw error;
       } else {
-        if (!fullName.trim()) {
-          Alert.alert('Missing field', 'Please enter your full name.');
-          setLoading(false);
-          return;
-        }
+        if (!fullName.trim()) { setError('Please enter your full name'); setLoading(false); return; }
         const { error } = await supabase.auth.signUp({
           email: email.trim().toLowerCase(),
           password,
           options: { data: { full_name: fullName.trim() } },
         });
         if (error) throw error;
-        Alert.alert(
-          'Check your email',
-          'We sent you a confirmation link.',
-          [{ text: 'OK', onPress: () => setMode('login') }],
-        );
+        setSuccess('Account created! Check your email for a confirmation link, then sign in.');
+        setMode('login'); setPassword('');
       }
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Authentication failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleAuth = async () => {
-    try {
-      setLoading(true);
-      const redirectUrl = Linking.createURL('/');
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl,
-          skipBrowserRedirect: true, // We must handle the browser redirect manually in RN
-        },
-      });
-
-      if (error) throw error;
-      
-      if (data?.url) {
-        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
-        
-        if (result.type === 'success' && result.url) {
-          // Manually parse the access_token and refresh_token from the hash fragment
-          const hash = result.url.split('#')[1];
-          if (hash) {
-            const params = hash.split('&').reduce((acc, current) => {
-              const [key, value] = current.split('=');
-              acc[key] = value;
-              return acc;
-            }, {} as Record<string, string>);
-            
-            if (params.access_token && params.refresh_token) {
-              const { error: sessionError } = await supabase.auth.setSession({
-                access_token: params.access_token,
-                refresh_token: params.refresh_token,
-              });
-              if (sessionError) throw sessionError;
-            }
-          }
-        }
-      }
-    } catch (err: any) {
-      Alert.alert('Google Login Failed', err.message);
-    } finally {
-      setLoading(false);
-    }
+      setError(err.message || 'Authentication failed.');
+    } finally { setLoading(false); }
   };
 
   return (
-    <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'android' ? 24 : 0}
-      >
-        <ScrollView
-          contentContainerStyle={s.scroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
-          {/* ── Logo ── */}
+    <SafeAreaView style={s.safe}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+
+          {/* Logo */}
           <View style={s.logoWrap}>
             <View style={s.logoRing}>
               <View style={s.logoInner}><Text style={s.logoText}>O</Text></View>
             </View>
             <Text style={s.appName}>Orbit</Text>
-            <Text style={s.appTagline}>Your AI-powered academic edge</Text>
+            <Text style={s.tagline}>Your AI-powered academic edge</Text>
           </View>
 
-          {/* ── Card ── */}
-          <View style={s.card}>
-            <Text style={s.cardTitle}>{mode === 'login' ? 'Sign in' : 'Create account'}</Text>
-            <Text style={s.cardSub}>
-              {mode === 'login' ? 'New user? ' : 'Already have an account? '}
-              <Text style={s.cardSubLink} onPress={() => setMode(mode === 'login' ? 'signup' : 'login')}>
-                {mode === 'login' ? 'Create an account' : 'Sign in'}
-              </Text>
-            </Text>
+          {/* Mode toggle */}
+          <View style={s.modeToggle}>
+            {(['login', 'signup'] as const).map(m => (
+              <TouchableOpacity key={m} style={[s.modeBtn, mode === m && s.modeBtnActive]}
+                onPress={() => { setMode(m); setError(''); setSuccess(''); }}>
+                <Text style={[s.modeBtnText, mode === m && s.modeBtnTextActive]}>
+                  {m === 'login' ? 'Sign In' : 'Create Account'}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-            {/* Full name (signup only) */}
+          <View style={s.card}>
+            {/* Success */}
+            {success ? (
+              <View style={s.successBanner}><Text style={s.successText}>{success}</Text></View>
+            ) : null}
+
+            <ErrorBanner msg={error} />
+
             {mode === 'signup' && (
-              <View style={s.inputWrap}>
-                <Text style={s.inputIcon}>👤</Text>
-                <TextInput
-                  style={s.input}
-                  value={fullName}
-                  onChangeText={setFullName}
-                  placeholder="Full Name"
-                  placeholderTextColor={colors.muted}
-                  autoCapitalize="words"
-                  returnKeyType="next"
-                />
+              <View style={s.field}>
+                <Text style={s.fieldLabel}>Full Name</Text>
+                <TextInput style={s.input} value={fullName} onChangeText={setFullName}
+                  placeholder="Your full name" placeholderTextColor={colors.muted}
+                  autoCapitalize="words" />
               </View>
             )}
 
-            {/* Email */}
-            <View style={s.inputWrap}>
-              <Text style={s.inputIcon}>✉</Text>
-              <TextInput
-                style={s.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="Email Address"
-                placeholderTextColor={colors.muted}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoCorrect={false}
-                returnKeyType="next"
-                textContentType="emailAddress"
-              />
+            <View style={s.field}>
+              <Text style={s.fieldLabel}>Email Address</Text>
+              <TextInput style={s.input} value={email} onChangeText={setEmail}
+                placeholder="you@elizadeuniversity.edu.ng" placeholderTextColor={colors.muted}
+                autoCapitalize="none" keyboardType="email-address" />
             </View>
 
-            {/* Password */}
-            <View style={s.inputWrap}>
-              <Text style={s.inputIcon}>🔒</Text>
-              <TextInput
-                style={[s.input, { flex: 1 }]}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Password"
-                placeholderTextColor={colors.muted}
-                secureTextEntry={!showPass}
-                returnKeyType="done"
-                onSubmitEditing={handleAuth}
-                textContentType={mode === 'login' ? 'password' : 'newPassword'}
-              />
-              <TouchableOpacity onPress={() => setShowPass(v => !v)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Text style={s.eyeIcon}>{showPass ? '🙈' : '👁️'}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Forgot password */}
-            {mode === 'login' && (
-              <TouchableOpacity style={{ alignSelf: 'flex-start' }}>
-                <Text style={s.forgotText}>Forgot password?</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Login / Create button */}
-            <TouchableOpacity
-              style={[s.primaryBtn, loading && { opacity: 0.6 }]}
-              onPress={handleAuth}
-              disabled={loading}
-              activeOpacity={0.85}
-            >
-              {loading
-                ? <ActivityIndicator color="#fff" />
-                : <Text style={s.primaryBtnText}>{mode === 'login' ? 'Login' : 'Create Account'}</Text>
-              }
-            </TouchableOpacity>
-
-            {/* Divider */}
-            <View style={s.divider}>
-              <View style={s.dividerLine} />
-              <Text style={s.dividerText}>or</Text>
-              <View style={s.dividerLine} />
-            </View>
-
-            {/* Social label */}
-            <Text style={s.socialLabel}>Join With Your Favourite Social Media Account</Text>
-
-            {/* Social icons row */}
-            <View style={s.socialRow}>
-              {SOCIAL.map(item => (
-                <TouchableOpacity
-                  key={item.key}
-                  style={[s.socialBtn, { backgroundColor: item.bg, borderColor: item.border, flex: undefined, paddingHorizontal: spacing.xl }]}
-                  onPress={handleGoogleAuth}
-                  disabled={loading}
-                  activeOpacity={0.75}
-                >
-                  <Text style={[
-                    s.socialBtnText,
-                    { color: item.color, fontWeight: item.bold ? '700' : '400', fontSize: typography.base },
-                  ]}>
-                    {item.label}
-                  </Text>
+            <View style={s.field}>
+              <Text style={s.fieldLabel}>Password</Text>
+              <View style={s.pwRow}>
+                <TextInput style={[s.input, { flex: 1 }]} value={password} onChangeText={setPassword}
+                  placeholder="Min. 6 characters" placeholderTextColor={colors.muted}
+                  secureTextEntry={!showPass} onSubmitEditing={handleAuth} />
+                <TouchableOpacity style={s.eyeBtn} onPress={() => setShowPass(v => !v)}>
+                  <Text style={s.eyeText}>{showPass ? 'Hide' : 'Show'}</Text>
                 </TouchableOpacity>
-              ))}
+              </View>
+              {mode === 'login' && (
+                <TouchableOpacity style={{ alignSelf: 'flex-end', marginTop: 4 }}>
+                  <Text style={s.forgotText}>Forgot password?</Text>
+                </TouchableOpacity>
+              )}
             </View>
+
+            <TouchableOpacity style={[s.primaryBtn, loading && { opacity: 0.6 }]} onPress={handleAuth} disabled={loading}>
+              {loading ? <ActivityIndicator color="#fff" /> : (
+                <Text style={s.primaryBtnText}>{mode === 'login' ? 'Login' : 'Create Account'}</Text>
+              )}
+            </TouchableOpacity>
           </View>
 
           {/* Terms */}
           <Text style={s.terms}>
-            By signing in with an account, you agree to SO's{'\n'}
-            <Text style={s.termsLink}>Terms of Service</Text>
-            {' '}and{' '}
+            By signing in, you agree to Orbit's{' '}
+            <Text style={s.termsLink}>Terms of Service</Text> and{' '}
             <Text style={s.termsLink}>Privacy Policy</Text>
           </Text>
         </ScrollView>
@@ -258,181 +139,31 @@ export default function LoginScreen() {
 }
 
 const s = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
-  },
-
-  // Logo
-  logoWrap: {
-    alignItems: 'center',
-    paddingTop: spacing.xl,
-    marginBottom: spacing.lg,
-  },
-  logoRing: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 2,
-    borderColor: colors.primary + '50',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
-  logoInner: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: {
-    color: '#fff',
-    fontSize: typography['2xl'],
-    fontWeight: '900',
-  },
-  appName: {
-    color: colors.foreground,
-    fontSize: typography.xl,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  appTagline: {
-    color: colors.muted,
-    fontSize: typography.sm,
-    marginTop: 2,
-  },
-
-  // Card
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.sm,
-  },
-  cardTitle: {
-    color: colors.foreground,
-    fontSize: typography['2xl'],
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  cardSub: {
-    color: colors.muted,
-    fontSize: typography.sm,
-    marginBottom: spacing.xs,
-  },
-  cardSubLink: {
-    color: colors.foreground,
-    fontWeight: '700',
-  },
-
-  // Inputs
-  inputWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    height: 52,
-  },
-  inputIcon: {
-    fontSize: 15,
-    marginRight: spacing.sm,
-    opacity: 0.7,
-  },
-  eyeIcon: {
-    fontSize: 15,
-    marginLeft: spacing.sm,
-  },
-  input: {
-    flex: 1,
-    color: colors.foreground,
-    fontSize: typography.base,
-  },
-  forgotText: {
-    color: colors.primary,
-    fontSize: typography.xs,
-    fontWeight: '600',
-    marginTop: -4,
-  },
-
-  // Button
-  primaryBtn: {
-    backgroundColor: colors.foreground,
-    borderRadius: radius.full,
-    height: 54,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.xs,
-  },
-  primaryBtnText: {
-    color: colors.background,
-    fontSize: typography.base,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-
-  // Divider
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginVertical: spacing.xs,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  dividerText: {
-    color: colors.muted,
-    fontSize: typography.xs,
-  },
-
-  // Social
-  socialLabel: {
-    color: colors.muted,
-    fontSize: typography.xs,
-    textAlign: 'center',
-  },
-  socialRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.md,
-  },
-  socialBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  socialBtnText: {
-    fontSize: 18,
-  },
-
-  // Terms
-  terms: {
-    color: colors.muted,
-    fontSize: typography.xs,
-    textAlign: 'center',
-    marginTop: spacing.lg,
-    lineHeight: 18,
-  },
-  termsLink: {
-    color: colors.foreground,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-  },
+  safe: { flex: 1, backgroundColor: colors.background },
+  scroll: { padding: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.xxl },
+  logoWrap: { alignItems: 'center', marginBottom: spacing.xl },
+  logoRing: { width: 88, height: 88, borderRadius: 44, borderWidth: 2, borderColor: colors.primary + '40', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md },
+  logoInner: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  logoText: { color: '#fff', fontSize: typography['2xl'], fontWeight: '900' },
+  appName: { color: colors.foreground, fontSize: typography.xl, fontWeight: '800', letterSpacing: -0.5 },
+  tagline: { color: colors.muted, fontSize: typography.sm, marginTop: 4 },
+  modeToggle: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: radius.xl, padding: 4, borderWidth: 1, borderColor: colors.border, marginBottom: spacing.lg },
+  modeBtn: { flex: 1, paddingVertical: 10, borderRadius: radius.lg, alignItems: 'center' },
+  modeBtnActive: { backgroundColor: colors.primary },
+  modeBtnText: { color: colors.muted, fontSize: typography.sm, fontWeight: '600' },
+  modeBtnTextActive: { color: '#fff' },
+  card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, gap: spacing.md, marginBottom: spacing.md },
+  successBanner: { backgroundColor: colors.green + '18', borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.green + '30' },
+  successText: { color: colors.green, fontSize: typography.xs, lineHeight: 18 },
+  field: { gap: 6 },
+  fieldLabel: { color: colors.muted, fontSize: typography.xs, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  input: { backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, height: 48, color: colors.foreground, fontSize: typography.base },
+  pwRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  eyeBtn: { paddingHorizontal: spacing.sm, paddingVertical: 12 },
+  eyeText: { color: colors.primary, fontSize: typography.xs, fontWeight: '600' },
+  forgotText: { color: colors.primary, fontSize: typography.xs, fontWeight: '600' },
+  primaryBtn: { backgroundColor: colors.primary, borderRadius: radius.lg, height: 52, alignItems: 'center', justifyContent: 'center', marginTop: spacing.xs },
+  primaryBtnText: { color: '#fff', fontSize: typography.base, fontWeight: '800' },
+  terms: { color: colors.muted, fontSize: typography.xs, textAlign: 'center', marginTop: spacing.lg, lineHeight: 18 },
+  termsLink: { color: colors.foreground, fontWeight: '600', textDecorationLine: 'underline' },
 });

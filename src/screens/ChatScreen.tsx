@@ -36,13 +36,18 @@ export default function ChatScreen() {
     finally { setSending(false); }
   };
 
-  if (loading) {
-    return (
-      <SafeAreaView style={s.center}>
-        <ActivityIndicator color={colors.primary} />
-      </SafeAreaView>
-    );
-  }
+  if (loading) return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ padding: 20, gap: 12 }}>
+        {[0,1,2,3,4].map(i => (
+          <View key={i} style={{ flexDirection: i % 2 === 0 ? 'row' : 'row-reverse', alignItems: 'flex-end', gap: 10 }}>
+            <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: colors.border, opacity: 0.4 }} />
+            <View style={{ width: i % 2 === 0 ? '65%' : '50%', height: 64, borderRadius: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }} />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={s.container} edges={['top']}>

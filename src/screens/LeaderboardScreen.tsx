@@ -4,9 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { getLeaderboard, LeaderboardResult } from '../services/leaderboard';
 import { useAuth } from '../contexts/AuthContext';
-import Skeleton from '../components/Skeleton';
 
-const MEDAL = ['🥇', '🥈', '🥉'];
+
 
 export default function LeaderboardScreen() {
   const { user } = useAuth();
@@ -77,7 +76,7 @@ export default function LeaderboardScreen() {
 
   if (error || !result) return (
     <View style={s.center}>
-      <Text style={s.errorIcon}>🏆</Text>
+      <View style={s.trophyIcon}><Text style={s.trophyText}>Ranks</Text></View>
       <Text style={s.errorTitle}>Leaderboard unavailable</Text>
       <Text style={s.errorText}>{error || 'No data'}</Text>
       <TouchableOpacity style={s.retryBtn} onPress={() => { setLoading(true); load(); }}>
@@ -128,7 +127,7 @@ export default function LeaderboardScreen() {
           {/* 2nd */}
           {top3[1] && (
             <View style={[s.podiumItem, s.podiumSecond]}>
-              <Text style={s.podiumMedal}>{MEDAL[1]}</Text>
+              <View style={[s.medal, s.medal2]}><Text style={s.medalText}>2</Text></View>
               <Image source={{ uri: top3[1].avatar }} style={s.podiumAvatar} />
               <Text style={s.podiumName} numberOfLines={1}>{top3[1].name}</Text>
               <Text style={s.podiumXp}>{top3[1].xp} XP</Text>
@@ -138,7 +137,7 @@ export default function LeaderboardScreen() {
           {/* 1st */}
           {top3[0] && (
             <View style={[s.podiumItem, s.podiumFirst]}>
-              <Text style={s.podiumMedal}>{MEDAL[0]}</Text>
+              <View style={[s.medal, s.medal1]}><Text style={s.medalText}>1</Text></View>
               <Image source={{ uri: top3[0].avatar }} style={[s.podiumAvatar, s.podiumAvatarFirst]} />
               <Text style={s.podiumName} numberOfLines={1}>{top3[0].name}</Text>
               <Text style={s.podiumXp}>{top3[0].xp} XP</Text>
@@ -148,7 +147,7 @@ export default function LeaderboardScreen() {
           {/* 3rd */}
           {top3[2] && (
             <View style={[s.podiumItem, s.podiumThird]}>
-              <Text style={s.podiumMedal}>{MEDAL[2]}</Text>
+              <View style={[s.medal, s.medal3]}><Text style={s.medalText}>3</Text></View>
               <Image source={{ uri: top3[2].avatar }} style={s.podiumAvatar} />
               <Text style={s.podiumName} numberOfLines={1}>{top3[2].name}</Text>
               <Text style={s.podiumXp}>{top3[2].xp} XP</Text>
@@ -195,15 +194,18 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: 140 },
   center: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  title: { color: colors.foreground, fontSize: typography.xl, fontWeight: '800' },
-  subtitle: { color: colors.muted, fontSize: typography.xs, marginTop: 2 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  livePill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.green + '15', paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.full },
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.green },
-  liveText: { color: colors.green, fontSize: 11, fontWeight: '600' },
-  errorIcon: { fontSize: 48 },
+  title: { color: colors.foreground, fontSize: typography['2xl'], fontWeight: '800' },
+
   errorTitle: { color: colors.foreground, fontSize: typography.lg, fontWeight: '700' },
   errorText: { color: colors.muted, fontSize: typography.sm, textAlign: 'center', paddingHorizontal: spacing.lg },
+  trophyIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" },
+  trophyText: { color: "#fff", fontSize: typography.xl, fontWeight: "900" },
+  medal: { width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", marginBottom: 4 },
+  medal1: { backgroundColor: colors.primary },
+  medal2: { backgroundColor: "#94a3b8" },
+  medal3: { backgroundColor: "#b45309" },
+  medalText: { color: "#fff", fontSize: 11, fontWeight: "900" },
+  podiumMedal: { fontSize: 0 },
   retryBtn: { backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.md },
   retryBtnText: { color: '#fff', fontWeight: '700' },
   
