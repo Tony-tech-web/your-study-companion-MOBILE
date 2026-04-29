@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, Modal, ActivityIndicator, RefreshControl, Alert,
+  TextInput, Modal, ActivityIndicator, RefreshControl, Alert, Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LineChart } from 'react-native-chart-kit';
@@ -48,6 +48,7 @@ export default function GPAScreen() {
 
   const highest = records.length > 0 ? Math.max(...records.map(r => Number(r.gpa))) : 0;
   const average = records.length > 0 ? records.reduce((a, r) => a + Number(r.gpa), 0) / records.length : 0;
+  const chartData = [...records].reverse().map(r => ({ sem: r.semester, gpa: Number(r.gpa) }));
 
   const resetForm = () => { setSemester(''); setGpa(''); setCredits(''); setCourses(''); setFormError(''); };
 
@@ -294,4 +295,10 @@ const s = StyleSheet.create({
   previewText: { color: colors.muted, fontSize: typography.xs },
   saveBtn: { backgroundColor: colors.primary, borderRadius: radius.md, padding: spacing.md, alignItems: 'center', marginTop: spacing.sm },
   saveBtnText: { color: '#fff', fontSize: typography.base, fontWeight: '700' },
+  // Chart section
+  chartCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
+  chartHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
+  chartTitle: { color: colors.foreground, fontSize: typography.base, fontWeight: '700' },
+  chartSub: { color: colors.muted, fontSize: typography.xs },
+  chartEmpty: { paddingVertical: spacing.xl, alignItems: 'center' },
 });

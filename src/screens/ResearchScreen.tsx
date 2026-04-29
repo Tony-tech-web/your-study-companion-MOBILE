@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   TextInput, ActivityIndicator, RefreshControl, Alert, Linking, Modal
 } from 'react-native';
-import * as Clipboard from 'expo-clipboard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { searchResearch, getResearchHistory, deleteResearchEntry, SearchResult } from '../services/research';

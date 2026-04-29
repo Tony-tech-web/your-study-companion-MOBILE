@@ -7,6 +7,8 @@ import { useAuth } from '../contexts/AuthContext';
 
 
 
+const MEDAL = ['🥇', '🥈', '🥉'];
+
 export default function LeaderboardScreen() {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
@@ -205,7 +207,6 @@ const s = StyleSheet.create({
   medal2: { backgroundColor: "#94a3b8" },
   medal3: { backgroundColor: "#b45309" },
   medalText: { color: "#fff", fontSize: 11, fontWeight: "900" },
-  podiumMedal: { fontSize: 0 },
   retryBtn: { backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.md },
   retryBtnText: { color: '#fff', fontWeight: '700' },
   
@@ -239,4 +240,10 @@ const s = StyleSheet.create({
   rowName: { color: colors.foreground, fontSize: typography.xs, fontWeight: '600' },
   rowTitle: { color: colors.muted, fontSize: 10 },
   rowXp: { color: colors.foreground, fontSize: typography.xs, fontWeight: '700' },
+  // Header row
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.sm },
+  subtitle: { color: colors.muted, fontSize: typography.xs, marginTop: 2 },
+  livePill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.green + '15', paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.full },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.green },
+  liveText: { color: colors.green, fontSize: 11, fontWeight: '600' },
 });

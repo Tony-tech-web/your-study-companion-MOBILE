@@ -43,7 +43,7 @@ export default function StudyToolsPanel({ visible, onClose, pdfContext }: StudyT
 
     try {
       const res = await callEdgeFunction('generate-study-tools', {
-        pdfContent,
+        pdfContent: pdfContext,
         toolType: activeTab,
         studyFocus: studyFocus.trim() || undefined,
       });

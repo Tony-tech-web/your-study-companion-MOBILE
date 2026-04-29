@@ -1,0 +1,275 @@
+# Codebase Analysis — Your Study Companion Mobile (Orbit)
+
+## Project Overview
+
+**Name:** Orbit — Your Study Companion (Mobile)  
+**Platform:** React Native (Expo ~54) + Expo Router v6  
+**Backend:** Shared with the web app — Express REST API + Supabase (Auth, Storage, Edge Functions)  
+**Language:** TypeScript  
+**Styling:** StyleSheet-based (dark, #0a0a0a background, `#f27d26` orange primary)  
+**App ID:** `com.elzarai.studycompanion`
+
+---
+
+## Architecture at a Glance
+
+```
+app/
+  _layout.tsx          ← Root layout: AuthProvider + SafeAreaProvider + auth guard
+  auth/
+    _layout.tsx        ← Stack for auth screens
+    login.tsx          ← Renders LoginScreen
+  (tabs)/
+    _layout.tsx        ← Custom floating pill TabBar (9 tabs)
+    index.tsx          ← Dashboard
+    ai.tsx             ← Orbit AI
+    planner.tsx        ← Study Planner
+    gpa.tsx            ← GPA Tracker
+    research.tsx       ← Research
+    chat.tsx           ← Global Chat
+    news.tsx           ← Campus News
+    courses.tsx        ← PDF Library
+    leaderboard.tsx    ← Leaderboard
+src/
+  contexts/
+    AuthContext.tsx    ← Supabase session + signOut
+  lib/
+    supabase.ts        ← Supabase client + callEdgeFunction()
+    theme.ts           ← colors, spacing, radius, typography, shadow tokens
+  types.ts             ← Shared TS interfaces
+  services/            ← One file per feature, all call api.ts or callEdgeFunction
+  screens/             ← One screen per tab (contains all logic + styles)
+  components/
+    UI.tsx             ← Skeleton, CardSkeleton, Badge, EmptyState, ListRow, SectionHeader
+    Skeleton.tsx       ← (separate skeleton component)
+    AI/
+      LibraryPanel.tsx ← Modal: pick PDFs → extract via parse-pdf Edge Fn
+      StudyToolsPanel.tsx ← Modal: flashcards, quiz, notes, summary via generate-study-tools
+```
+
+---
+
+## Design System (`src/lib/theme.ts`)
+
+| Token | Key Values |
+|---|---|
+| `colors.primary` | `#f27d26` (orange) |
+| `colors.background` | `#0a0a0a` |
+| `colors.card` | `#141414` |
+| `colors.border` | `#222222` |
+| `colors.muted` | `#666666` |
+| `colors.green` | `#10b981` |
+| `colors.red` | `#ef4444` |
+| `colors.blue` | `#3b82f6` |
+| `spacing` | xs:4, sm:8, md:16, lg:24, xl:32, xxl:48 |
+| `radius` | sm:8 → full:9999 |
+| `typography` | xs:11 → 4xl:36 |
+
+---
+
+## Navigation & Auth
+
+- **Expo Router file-based routing** — no manual `NavigationContainer`.
+- `app/_layout.tsx` wraps everything in `SafeAreaProvider` + `AuthProvider`.
+- `RootLayoutNav` uses a `useEffect` on `session` + `segments` to guard routes:
+  - No session → `router.replace('/auth/login')`
+  - Session + in auth → `router.replace('/(tabs)')`
+- Tab layout uses a **custom `FloatingTabBar`** — a dark pill with SVG icons and active-circle highlight. 9 tabs total.
+
+---
+
+## Auth (`src/contexts/AuthContext.tsx`)
+
+- `useRef` guard prevents double `getSession()` calls on StrictMode re-renders.
+- Exposes `{ session, user, loading, signOut }`.
+- Uses `AsyncStorage` for Supabase session persistence on device.
+
+---
+
+## API Layer (`src/services/api.ts`)
+
+- **Axios** instance with `EXPO_PUBLIC_API_BASE_URL` base.
+- Request interceptor attaches Supabase `access_token` as Bearer header.
+- **Supabase Edge Functions** called directly via `callEdgeFunction()` in `src/lib/supabase.ts` (used for AI, leaderboard, research, parse-pdf, generate-study-tools).
+
+---
+
+## Screens
+
+### Dashboard (`DashboardScreen.tsx`)
+- Loads `getFullDashboardStats()`, `getTasks()`, `getActivity()` in `Promise.allSettled`.
+- Shows: XP bar, 4 stat cards (GPA, AI sessions, study mins, research), bar chart activity, study plans list, quick actions.
+- **Bug:** `insets` from `useSafeAreaInsets()` is used in JSX but not declared in the component (will crash).
+- **Bug:** `signOut` and `router` are used in JSX but not imported/declared.
+
+### AI Screen (`AIScreen.tsx`) — most complex
+- 3 modes: **Chat**, **Teach**, **Test**.
+- PDF context loaded via `LibraryPanel` → `callEdgeFunction('parse-pdf')`.
+- AI calls go to `callEdgeFunction('ai-chat')` with SSE streaming.
+- Teach mode: chunks PDF pages (5 at a time), auto-advances.
+- Model picker modal: Gemini Flash, Gemini Pro, GPT-4o (via OpenRouter).
+- Context chips (active docs) shown above input bar.
+- Study Tools button opens `StudyToolsPanel`.
+- **Bug (minor):** `cleanText` regex uses escaped braces `\\{\\{` — may not strip template markers correctly in production (works fine as string literal but is double-escaped).
+
+### Planner (`PlannerScreen.tsx`)
+- CRUD study plans: name, subjects (comma-separated), total hours.
+- Shows stats row (total plans, total hours, avg progress), progress bars, subject tags.
+- Add via slide-up modal with `pageSheet` presentation.
+- `normalizeSubjects` in service handles string or object arrays from backend.
+
+### GPA (`GPAScreen.tsx`)
+- Track GPA per semester (0–5 scale, Nigerian university classification).
+- `LineChart` from `react-native-chart-kit` for trajectory.
+- Colour-coded GPA: green ≥ 3.5, orange ≥ 2.4, red otherwise.
+- **Bug:** `chartData` and `Dimensions` are referenced in JSX but never declared in the file. Will crash on render with records.
+
+### Research (`ResearchScreen.tsx`)
+- Search via `callEdgeFunction('research-search')` (Serper + AI summary).
+- 2 modes: Academic / Projects.
+- Tap a result → AI description generated inline via `callEdgeFunction('ai-chat')` with SSE streaming.
+- Citation generator: APA, MLA, CHI formats in a bottom sheet modal.
+- **Bug:** `import * as Clipboard from 'expo-clipboard'` is **duplicated** on lines 6 and 7 — TypeScript will throw.
+- **Bug:** `useSafeAreaInsets` is used (`insets.top`) but not imported.
+- `expo-clipboard` is **not** in `package.json` dependencies.
+
+### Leaderboard (`LeaderboardScreen.tsx`)
+- Calls `callEdgeFunction('get-leaderboard')`.
+- Podium view for top 3, full scrollable table below.
+- "My rank" highlight card when user is outside top 3.
+- Avatars via DiceBear API (`/7.x/initials/svg`).
+- **Bug:** `MEDAL` constant (emoji array) is referenced in JSX but never declared.
+
+### Courses (`CoursesScreen.tsx`)
+- Lists PDFs from `api.get('/api/pdfs')`.
+- No upload from mobile (intentionally — user uploads from web).
+- Long-press or tap "Remove" button to delete PDF.
+
+### Chat (`ChatScreen.tsx`)
+- Global study hub channel, basic send/receive.
+- No real-time subscription yet ("Realtime coming soon" in header).
+- `receiver_id` optional in `sendChatMessage`.
+
+### News (`NewsScreen.tsx`)
+- Campus news from `api.get('/api/news')`.
+- Category filter tabs (All, Academic, Events, Research, General).
+- Skeleton cards on load.
+- Fallback Unsplash image for missing thumbnails.
+
+### Login (`LoginScreen.tsx`)
+- Sign in / Create Account toggle.
+- **Bug:** `SafeAreaView` imported from both `react-native` (line 5) and `react-native-safe-area-context` (line 7) — the second one shadows the first but causes a duplicate import warning.
+
+---
+
+## Components
+
+### `LibraryPanel.tsx`
+- Slide-up modal: lists user PDFs, multi-select, then calls `callEdgeFunction('parse-pdf')` for each.
+- Combines text + pages from all selected docs and passes up via `onPdfsExtracted`.
+- **Bug:** References `pdf.filePath` then `pdf.file_path` — the `Document` type only defines `uploadedAt`, `size`, `category`, `totalPages`, `scannedPages`. Neither `filePath` nor `file_path` are on the type.
+
+### `StudyToolsPanel.tsx`
+- Generates flashcards, quiz, notes, summary from PDF context.
+- Calls `callEdgeFunction('generate-study-tools')`.
+- **Bug:** Variable is named `pdfContext` in props but referenced as `pdfContent` in `handleGenerate` call. Will always throw a ReferenceError.
+- Interactive flashcard flip, quiz with per-question answer reveal and final score.
+
+### `UI.tsx`
+- `Skeleton`, `CardSkeleton`, `StatSkeleton` — static grey blocks (no shimmer animation yet).
+- `ListRow`, `Badge`, `SectionHeader`, `EmptyState` — shared layout components.
+- Uses `require('react-native')` inside render functions (anti-pattern but functional).
+
+---
+
+## Services
+
+| Service | Transport | Endpoints |
+|---|---|---|
+| `api.ts` | Axios + Supabase Bearer | Base: `EXPO_PUBLIC_API_BASE_URL` |
+| `ai.ts` | Axios | `/api/ai-conversations` (GET, POST, DELETE) |
+| `dashboard.ts` | Axios | `/api/stats/me`, `/api/gpa`, `/api/study-plans`, `/api/activity` |
+| `documents.ts` | Axios | `/api/pdfs`, `/api/pdfs/:id`, `/api/pdfs/:id/scan` |
+| `gpa.ts` | Axios | `/api/gpa` (GET, POST, DELETE) |
+| `planner.ts` | Axios | `/api/study-plans` (GET, POST, DELETE) |
+| `research.ts` | Edge Fn + Axios | `research-search` (Edge), `/api/research` (GET, DELETE) |
+| `leaderboard.ts` | Edge Fn | `get-leaderboard` |
+| `chat.ts` | Axios | `/api/chat` (GET, POST) |
+| `news.ts` | Axios | `/api/news` |
+
+---
+
+## Edge Functions Used
+
+| Function | Called From |
+|---|---|
+| `ai-chat` | `AIScreen`, `ResearchScreen` |
+| `parse-pdf` | `LibraryPanel` |
+| `generate-study-tools` | `StudyToolsPanel` |
+| `get-leaderboard` | `leaderboard.ts` |
+| `research-search` | `research.ts` |
+
+---
+
+## Key Bugs & Issues Found
+
+> [!CAUTION]
+> These will cause runtime crashes or build failures.
+
+| # | File | Bug |
+|---|---|---|
+| 1 | `ResearchScreen.tsx` | `import * as Clipboard` duplicated (lines 6–7) — TypeScript error |
+| 2 | `ResearchScreen.tsx` | `useSafeAreaInsets` used but not imported |
+| 3 | `ResearchScreen.tsx` | `expo-clipboard` not in `package.json` |
+| 4 | `StudyToolsPanel.tsx` | `pdfContent` referenced instead of `pdfContext` → ReferenceError at runtime |
+| 5 | `GPAScreen.tsx` | `chartData` and `Dimensions` used but never declared |
+| 6 | `DashboardScreen.tsx` | `insets`, `signOut`, `router` used in JSX but not declared |
+| 7 | `LeaderboardScreen.tsx` | `MEDAL` constant not declared |
+| 8 | `LibraryPanel.tsx` | `pdf.filePath` / `pdf.file_path` not on `Document` type |
+| 9 | `LoginScreen.tsx` | Duplicate `SafeAreaView` import from two packages |
+
+> [!WARNING]
+> These are non-crash issues but need addressing.
+
+| # | File | Issue |
+|---|---|---|
+| 10 | `AIScreen.tsx` | `cleanText` regex double-escape — may not strip `{{...}}` template markers |
+| 11 | `ChatScreen.tsx` | No real-time subscription — currently poll-on-mount only |
+| 12 | `CoursesScreen.tsx` | No mobile upload capability — users must use web app |
+| 13 | `UI.tsx` | Skeleton has no shimmer animation |
+| 14 | All screens | Skeleton loading states are inline JSX, not using the `Skeleton` component |
+| 15 | `DashboardScreen.tsx` | Loading state renders outside `ScrollView`, ignoring padding from tabs |
+
+---
+
+## Environment Variables (`.env`)
+
+```
+EXPO_PUBLIC_SUPABASE_URL=...
+EXPO_PUBLIC_SUPABASE_ANON_KEY=...
+EXPO_PUBLIC_API_BASE_URL=http://localhost:3000  (or production URL)
+```
+
+---
+
+## Key Dependencies
+
+| Package | Version | Purpose |
+|---|---|---|
+| `expo` | ~54.0.0 | Runtime |
+| `expo-router` | ~6.0.23 | File-based navigation |
+| `@supabase/supabase-js` | ^2.103.3 | Auth + Edge Functions |
+| `axios` | ^1.15.1 | REST API client |
+| `react-native-chart-kit` | ^6.12.0 | GPA line chart |
+| `react-native-reanimated` | ~4.1.1 | Animation |
+| `expo-document-picker` | ~14.0.8 | (imported but not used in current screens) |
+| `expo-blur` | ~15.0.8 | (imported but not used in current screens) |
+| `nativewind` | ^4.0.1 | Tailwind for RN (set up but not used — all styling is StyleSheet) |
+
+---
+
+## Summary
+
+The app is a well-structured, feature-complete academic companion mobile app. The architecture is clean — one screen per feature, one service per domain, a shared API client, and a consistent dark theme system. The Orbit AI screen is the most sophisticated, supporting streaming AI responses, multi-document PDF context, teach/test session modes, and a full study tools panel.
+
+**The most urgent fixes needed are bugs #1–9** listed above — several screens will crash immediately on render (GPAScreen, DashboardScreen), and StudyToolsPanel will throw a ReferenceError on every generation attempt.
