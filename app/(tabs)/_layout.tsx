@@ -49,7 +49,7 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             >
               {/* Active circle highlight */}
               <View style={[s.iconWrap, focused && s.iconWrapActive]}>
-                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
                   <Path
                     d={iconPath}
                     stroke={focused ? '#fff' : colors.muted}
@@ -94,39 +94,38 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     pointerEvents: 'box-none',
   },
   pill: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(20,20,20,0.96)',
-    borderRadius: 40,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
+    backgroundColor: 'rgba(16,16,18,0.97)',
+    borderRadius: 32,
+    paddingHorizontal: 6,
+    paddingVertical: 5,
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.12)',
-    // Shadow — iOS
+    borderColor: 'rgba(255,255,255,0.10)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    // Shadow — Android
-    elevation: 20,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    elevation: 18,
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 440,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
+    gap: 2,
+    paddingVertical: 2,
   },
   iconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -134,15 +133,15 @@ const s = StyleSheet.create({
     backgroundColor: colors.primary,
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.45,
+    shadowRadius: 6,
+    elevation: 5,
   },
   label: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '600',
     color: colors.muted,
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
   labelActive: {
     color: colors.primary,
