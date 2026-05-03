@@ -4,7 +4,6 @@ import {
   TextInput, ActivityIndicator, RefreshControl, Alert, Linking,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import * as Clipboard from 'expo-clipboard';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { searchResearch, getResearchHistory, deleteResearchEntry, SearchResult } from '../services/research';
 import { callEdgeFunction } from '../lib/supabase';
