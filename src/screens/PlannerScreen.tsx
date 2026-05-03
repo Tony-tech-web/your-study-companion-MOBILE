@@ -199,7 +199,7 @@ const cm = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.card },
   title: { color: colors.foreground, fontSize: 18, fontWeight: '800' },
   cancel: { color: colors.primary, fontSize: 15, fontWeight: '600' },
-  content: { padding: spacing.lg, gap: spacing.md, paddingBottom: 80 },
+  content: { padding: spacing.lg, gap: spacing.md, paddingBottom: 130 },
   field: { gap: 6 },
   label: { color: colors.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
   input: { backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, color: colors.foreground, fontSize: 15, borderWidth: 1, borderColor: colors.border },
@@ -273,7 +273,7 @@ const PlanDetail = ({ plan, onBack, onDelete }: { plan: StudyPlan; onBack: () =>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+      <ScrollView contentContainerStyle={ paddingBottom: 130 }>
         {/* Week strip calendar */}
         <View style={pd.weekStrip}>
           {weekDays.map(d => {
@@ -473,7 +473,7 @@ export default function PlannerScreen() {
 
       <ScrollView
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
-        contentContainerStyle={{ paddingBottom: 120 }}>
+        contentContainerStyle={ paddingBottom: 130 }>
 
         {/* Calendar — always visible at top */}
         <MiniCalendar

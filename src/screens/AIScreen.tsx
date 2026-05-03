@@ -572,7 +572,7 @@ const s = StyleSheet.create({
   statusText: { color: colors.muted, fontSize: 11, fontWeight: '500' },
   clearBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: colors.border },
   clearBtnText: { color: colors.muted, fontSize: 11, fontWeight: '600' },
-  list: { padding: spacing.md, gap: 12, paddingBottom: 24 },
+  list: { padding: spacing.md, gap: 12, paddingBottom: 130 },
   msgRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
   msgRowUser: { flexDirection: 'row-reverse' },
   avatar: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },

@@ -63,7 +63,7 @@ export default function ChatScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={88}>
         {/* Messages */}
         <FlatList ref={listRef} data={messages} keyExtractor={(m, i) => m.id || String(i)}
-          contentContainerStyle={{ padding: spacing.md, paddingBottom: 110, gap: 8 }}
+          contentContainerStyle={{ padding: spacing.md, paddingBottom: 130, gap: 8 }}
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={
             <View style={s.empty}>

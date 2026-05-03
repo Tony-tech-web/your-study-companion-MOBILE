@@ -210,7 +210,7 @@ const s = StyleSheet.create({
   modeBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   modeBtnText: { color: colors.muted, fontSize: typography.xs, fontWeight: '600' },
   modeBtnTextActive: { color: '#fff' },
-  content: { padding: spacing.md, gap: spacing.md, paddingBottom: spacing.xxl },
+  content: { padding: spacing.md, gap: spacing.md, paddingBottom: 130 },
   errorCard: { backgroundColor: colors.red + '15', borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.red + '30' },
   errorText: { color: colors.red, fontSize: typography.sm },
   insightsCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.primary + '40', gap: spacing.sm },

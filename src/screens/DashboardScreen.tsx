@@ -160,7 +160,7 @@ export default function DashboardScreen() {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  content: { padding: spacing.lg, paddingBottom: 130 },
   center: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.lg },
   greeting: { color: colors.muted, fontSize: typography.sm },
