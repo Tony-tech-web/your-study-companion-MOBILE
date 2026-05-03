@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
 import { colors, spacing, radius, typography } from '../lib/theme';
 
@@ -43,7 +43,9 @@ export default function LoginScreen() {
         setMode('login'); setPassword('');
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed.');
+      // Log full error for debugging
+      console.error('Auth error:', JSON.stringify(err));
+      setError(err.message || err.error_description || 'Authentication failed. Check your credentials and network.');
     } finally { setLoading(false); }
   };
 

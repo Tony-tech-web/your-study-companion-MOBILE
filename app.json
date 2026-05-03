@@ -5,20 +5,36 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "scheme": "studycompanion",
+    "scheme": "orbit",
     "splash": {
       "resizeMode": "contain",
       "backgroundColor": "#0a0a0a"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.elzarai.studycompanion"
+      "bundleIdentifier": "com.elizade.orbit"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0a0a0a"
       },
-      "package": "com.elzarai.studycompanion"
+      "package": "com.elizade.orbit",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "orbit",
+              "host": "auth-callback"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "plugins": [
       "expo-router",

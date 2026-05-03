@@ -4,11 +4,28 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
 import { useRouter, useSegments } from 'expo-router';
+import { Linking, Platform } from 'react-native';
+import { handleDeepLink } from '../src/lib/supabase';
 
 function RootLayoutNav() {
   const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  // Handle deep links for OAuth (Android requires manual handling)
+  useEffect(() => {
+    // Handle app opened from a deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink(url);
+    });
+
+    // Handle deep links while app is open
+    const sub = Linking.addEventListener('url', ({ url }) => {
+      handleDeepLink(url);
+    });
+
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     if (loading) return;
