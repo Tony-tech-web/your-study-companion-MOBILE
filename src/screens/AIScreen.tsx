@@ -616,7 +616,7 @@ export default function AIScreen() {
         )}
 
         {/* Input */}
-        <View style={[s.inputWrap, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+        <View style={[s.inputWrap, { paddingBottom: Math.max(insets.bottom, 10) + 92 }]}>
           {/* Mode buttons — Chat, Teach, Test only */}
           <View style={s.modeBar}>
             {(['chat', 'teach', 'test'] as ChatMode[]).map(m => (

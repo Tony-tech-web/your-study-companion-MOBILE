@@ -1,73 +1,178 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Animated,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { colors, radius } from '../../src/lib/theme';
+import { colors, fontFamily, radius, shadow, spacing } from '../../src/lib/theme';
 import Svg, { Path } from 'react-native-svg';
 
-const icons: Record<string, string> = {
-  index:        'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10',
-  ai:           'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
-  planner:      'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
-  gpa:          'M22 12h-4l-3 9L9 3l-3 9H2',
-  research:     'M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z',
-  chat:         'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z',
-  news:         'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l6 6v8a2 2 0 01-2 2z',
-  courses:      'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253z',
-  leaderboard:  'M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z',
+type RouteName = 'index' | 'ai' | 'planner' | 'gpa' | 'research' | 'chat' | 'news' | 'courses' | 'leaderboard';
+
+const icons: Record<RouteName | 'plus', string> = {
+  index: 'M3 10.5L12 3l9 7.5V21a1 1 0 01-1 1h-5.4v-6.5H9.4V22H4a1 1 0 01-1-1V10.5z',
+  ai: 'M12 2l2.5 6.9L21.5 12l-7 3.1L12 22l-2.5-6.9L2.5 12l7-3.1L12 2z',
+  planner: 'M7 4v3M17 4v3M4 9h16M6 13h5M6 17h8M5 6h14a1 1 0 011 1v15H4V7a1 1 0 011-1z',
+  gpa: 'M3 17l5-5 4 4 7-9M4 21h16',
+  research: 'M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z',
+  chat: 'M21 15a2 2 0 01-2 2H8l-5 4V5a2 2 0 012-2h14a2 2 0 012 2z',
+  news: 'M5 4h10l5 5v15H5zM14 4v6h6M8 14h8M8 18h8',
+  courses: 'M4 6.5A3.5 3.5 0 017.5 3H20v16H7.5A3.5 3.5 0 004 22.5V6.5zM4 6.5v16',
+  leaderboard: 'M8 21h8M12 17v4M6 4h12v4a6 6 0 01-12 0V4zM6 6H3v2a4 4 0 004 4M18 6h3v2a4 4 0 01-4 4',
+  plus: 'M12 5v14M5 12h14',
 };
 
-const labels: Record<string, string> = {
-  index: 'Home', ai: 'Orbit', planner: 'Plan',
-  gpa: 'GPA', research: 'Search', chat: 'Chat',
-  news: 'News', leaderboard: 'Ranks',
-};
+const primaryRoutes: Array<{ name: RouteName; label: string }> = [
+  { name: 'index', label: 'Dashboard' },
+  { name: 'ai', label: 'AI Assistant' },
+  { name: 'news', label: 'News' },
+  { name: 'leaderboard', label: 'Leaderboard' },
+];
 
-function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+const moreRoutes: Array<{ name: RouteName; label: string; detail: string }> = [
+  { name: 'planner', label: 'Planner', detail: 'Study schedule' },
+  { name: 'gpa', label: 'GPA', detail: 'Academic tracker' },
+  { name: 'research', label: 'Research', detail: 'AI search' },
+  { name: 'courses', label: 'Courses', detail: 'PDF library' },
+  { name: 'chat', label: 'Chat', detail: 'Campus messages' },
+];
+
+const Icon = ({ name, color, size = 20, strokeWidth = 1.9 }: { name: RouteName | 'plus'; color: string; size?: number; strokeWidth?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d={icons[name]} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const activeRoute = state.routes[state.index]?.name;
+  const [open, setOpen] = useState(false);
+  const scale = useRef(new Animated.Value(0.92)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const activeRoute = state.routes[state.index]?.name as RouteName | undefined;
 
-  if (activeRoute === 'ai') return null;
+  const routeByName = useMemo(() => {
+    const map = new Map<string, { key: string; name: string }>();
+    state.routes.forEach(route => map.set(route.name, { key: route.key, name: route.name }));
+    return map;
+  }, [state.routes]);
+
+  const moreActive = !!activeRoute && moreRoutes.some(route => route.name === activeRoute);
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: open ? 1 : 0,
+        duration: open ? 180 : 120,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: open ? 1 : 0.92,
+        damping: 18,
+        stiffness: 220,
+        mass: 0.8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [open, opacity, scale]);
+
+  const goTo = (routeName: RouteName) => {
+    const route = routeByName.get(routeName);
+    if (!route) return;
+    const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+    if (!event.defaultPrevented) navigation.navigate(route.name);
+    setOpen(false);
+  };
+
+  const renderTab = (route: { name: RouteName; label: string }) => {
+    const focused = activeRoute === route.name;
+    return (
+      <TouchableOpacity
+        key={route.name}
+        onPress={() => goTo(route.name)}
+        activeOpacity={0.75}
+        style={s.tab}
+        accessibilityRole="button"
+        accessibilityState={{ selected: focused }}
+      >
+        <View style={[s.iconWrap, focused && s.iconWrapActive]}>
+          <Icon name={route.name} color={focused ? colors.onPrimary : colors.muted} size={19} strokeWidth={focused ? 2.25 : 1.7} />
+        </View>
+        <Text style={[s.label, focused && s.labelActive]} numberOfLines={2}>{route.label}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <View style={[s.barWrap, { paddingBottom: insets.bottom + 8 }]} pointerEvents="box-none">
-      <View style={s.pill}>
-        {state.routes.map((route, i) => {
-          const focused = state.index === i;
-          const iconPath = icons[route.name] || icons.index;
-          const label = labels[route.name] || route.name;
-
-          const onPress = () => {
-            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-            if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
-          };
-
-          return (
-            <TouchableOpacity
-              key={route.key}
-              onPress={onPress}
-              activeOpacity={0.7}
-              style={s.tab}
-            >
-              {/* Active circle highlight */}
-              <View style={[s.iconWrap, focused && s.iconWrapActive]}>
-                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d={iconPath}
-                    stroke={focused ? colors.onPrimary : colors.muted}
-                    strokeWidth={focused ? 2.2 : 1.6}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
+    <>
+      <Modal visible={open} transparent animationType="none" onRequestClose={() => setOpen(false)}>
+        <Pressable style={s.modalBackdrop} onPress={() => setOpen(false)}>
+          <Animated.View
+            style={[
+              s.morePanel,
+              {
+                bottom: Math.max(insets.bottom, 10) + 84,
+                opacity,
+                transform: [{ scale }],
+              },
+            ]}
+          >
+            <Pressable onPress={() => {}}>
+              <View style={s.moreHandle} />
+              <Text style={s.moreTitle}>More Tools</Text>
+              <View style={s.moreGrid}>
+                {moreRoutes.map(route => {
+                  const focused = activeRoute === route.name;
+                  return (
+                    <TouchableOpacity
+                      key={route.name}
+                      onPress={() => goTo(route.name)}
+                      activeOpacity={0.78}
+                      style={[s.moreItem, focused && s.moreItemActive]}
+                    >
+                      <View style={[s.moreIcon, focused && s.moreIconActive]}>
+                        <Icon name={route.name} color={focused ? colors.onPrimary : colors.foreground} size={18} />
+                      </View>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <Text style={s.moreLabel} numberOfLines={1}>{route.label}</Text>
+                        <Text style={s.moreDetail} numberOfLines={1}>{route.detail}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
-              <Text style={[s.label, focused && s.labelActive]}>{label}</Text>
-            </TouchableOpacity>
-          );
-        })}
+            </Pressable>
+          </Animated.View>
+        </Pressable>
+      </Modal>
+
+      <View style={[s.barWrap, { paddingBottom: Math.max(insets.bottom, 8) }]} pointerEvents="box-none">
+        <View style={s.pill}>
+          {renderTab(primaryRoutes[0])}
+          {renderTab(primaryRoutes[1])}
+          <TouchableOpacity
+            onPress={() => setOpen(v => !v)}
+            activeOpacity={0.78}
+            style={s.plusSlot}
+            accessibilityRole="button"
+            accessibilityLabel="Open more navigation"
+          >
+            <View style={[s.plusButton, (open || moreActive) && s.plusButtonActive]}>
+              <Icon name="plus" color={open || moreActive ? colors.onPrimary : colors.foreground} size={24} strokeWidth={2.35} />
+            </View>
+            <Text style={[s.label, moreActive && s.labelActive]} numberOfLines={1}>More</Text>
+          </TouchableOpacity>
+          {renderTab(primaryRoutes[2])}
+          {renderTab(primaryRoutes[3])}
+        </View>
       </View>
-    </View>
+    </>
   );
 }
 
@@ -91,63 +196,159 @@ export default function TabsLayout() {
 }
 
 const s = StyleSheet.create({
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.42)',
+  },
+  morePanel: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    alignSelf: 'center',
+    maxWidth: 430,
+    borderRadius: radius.xxl,
+    padding: spacing.md,
+    backgroundColor: 'rgba(18,18,18,0.88)',
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadow.floating,
+  },
+  moreHandle: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 99,
+    backgroundColor: colors.border,
+    marginBottom: 12,
+  },
+  moreTitle: {
+    color: colors.foreground,
+    fontFamily: fontFamily.display,
+    fontSize: 18,
+    fontWeight: '900',
+    marginBottom: 12,
+  },
+  moreGrid: {
+    gap: 10,
+  },
+  moreItem: {
+    minHeight: 62,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.input,
+    paddingHorizontal: 12,
+  },
+  moreItemActive: {
+    borderColor: colors.primary,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  moreIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  moreIconActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  moreLabel: {
+    color: colors.foreground,
+    fontFamily: fontFamily.sans,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  moreDetail: {
+    color: colors.muted,
+    fontFamily: fontFamily.sans,
+    fontSize: 11,
+    marginTop: 2,
+  },
   barWrap: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     pointerEvents: 'box-none',
   },
   pill: {
+    width: '100%',
+    maxWidth: 430,
+    minHeight: 72,
     flexDirection: 'row',
-    backgroundColor: 'rgba(20,20,20,0.70)',
-    borderRadius: 32,
-    paddingHorizontal: 6,
-    paddingVertical: 5,
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(20,20,20,0.78)',
+    borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45,
-    shadowRadius: 40,
-    elevation: 18,
-    width: '100%',
-    maxWidth: 440,
+    ...shadow.floating,
   },
   tab: {
     flex: 1,
+    minHeight: 58,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  plusSlot: {
+    width: 68,
+    minHeight: 62,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
-    paddingVertical: 2,
   },
   iconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconWrapActive: {
     backgroundColor: colors.primary,
+  },
+  plusButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: colors.border,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.45,
+    shadowRadius: 28,
+    elevation: 20,
+  },
+  plusButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   label: {
-    fontSize: 8,
-    fontWeight: '600',
     color: colors.muted,
-    letterSpacing: 0.1,
+    fontFamily: fontFamily.sans,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0,
+    lineHeight: 9,
+    textAlign: 'center',
   },
   labelActive: {
     color: colors.primary,
-    fontWeight: '700',
   },
 });

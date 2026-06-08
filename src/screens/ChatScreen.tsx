@@ -6,10 +6,11 @@ import {
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { getChatMessages, sendChatMessage, ChatMessage } from '../services/chat';
 import { useAuth } from '../contexts/AuthContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ChatScreen() {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -60,10 +61,10 @@ export default function ChatScreen() {
         </View>
       </View>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={88}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
         {/* Messages */}
         <FlatList ref={listRef} data={messages} keyExtractor={(m, i) => m.id || String(i)}
-          contentContainerStyle={{ padding: spacing.md, paddingBottom: 130, gap: 8 }}
+          contentContainerStyle={{ padding: spacing.md, paddingBottom: 178, gap: 8 }}
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={
             <View style={s.empty}>
@@ -88,7 +89,7 @@ export default function ChatScreen() {
         />
 
         {/* Input */}
-        <View style={s.inputRow}>
+        <View style={[s.inputRow, { paddingBottom: Math.max(insets.bottom, 8) + 92 }]}>
           <TextInput value={input} onChangeText={setInput} placeholder="Send a message..."
             placeholderTextColor={colors.muted} style={s.input}
             onSubmitEditing={handleSend} returnKeyType="send" />
