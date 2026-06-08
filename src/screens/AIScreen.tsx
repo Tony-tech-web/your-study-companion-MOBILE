@@ -35,7 +35,7 @@ const normalizePipeText = (text: string) => text
 const cleanText = (t: string) => normalizePipeText(stripDecorativeGlyphs(t.replace(/\{\{[^}]+\}\}/g, '').replace(/\*\*/g, '')));
 
 const AI_RESPONSE_STYLE =
-  'Use a mature academic tone. Use short headings, compact paragraphs, and bullets for comparisons. Do not use emoji, decorative glyphs, or markdown pipe tables unless the user explicitly asks for a table.';
+  'Use a mature academic tone. Use short headings, compact paragraphs, and bullets for comparisons. Do not use emoji, decorative glyphs, or markdown pipe tables unless the user explicitly asks for a table. When you include code, provide complete, syntactically valid examples in fenced code blocks with the language name, then briefly explain the important lines.';
 
 const friendlyAIError = (err: any) => {
   const raw = String(err?.message || err || '').trim();
@@ -85,6 +85,52 @@ const ModeIcon = ({ mode, color, size = 18 }: { mode: ChatMode; color: string; s
 };
 
 // ─── PDF Library Bottom Sheet ──────────────────────────────────────────────
+const renderMessageContent = (content: string, isUser: boolean) => {
+  if (isUser) {
+    return <Text style={[s.bubbleText, { color: '#fff' }]}>{content}</Text>;
+  }
+
+  const lines = content.split('\n');
+  const nodes: React.ReactNode[] = [];
+  let paragraph: string[] = [];
+
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    nodes.push(
+      <Text key={`p-${nodes.length}`} style={s.bubbleText}>
+        {paragraph.join('\n')}
+      </Text>
+    );
+    paragraph = [];
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*```/.test(lines[i])) {
+      flushParagraph();
+      const language = lines[i].replace(/^\s*```/, '').trim() || 'code';
+      const codeLines: string[] = [];
+      i += 1;
+      while (i < lines.length && !/^\s*```/.test(lines[i])) {
+        codeLines.push(lines[i]);
+        i += 1;
+      }
+      nodes.push(
+        <View key={`code-${nodes.length}`} style={s.codeBlock}>
+          <Text style={s.codeLang}>{language}</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <Text style={s.codeText}>{codeLines.join('\n').replace(/\s+$/, '')}</Text>
+          </ScrollView>
+        </View>
+      );
+    } else {
+      paragraph.push(lines[i]);
+    }
+  }
+
+  flushParagraph();
+  return nodes;
+};
+
 const PdfLibrarySheet = ({
   visible, mode, pdfs, pdfStates,
   onClose, onDownload, onStart,
@@ -527,7 +573,7 @@ export default function AIScreen() {
                   <Text style={[s.avatarText, !isUser && { color: colors.primary }]}>{isUser ? 'U' : 'O'}</Text>
                 </View>
                 <View style={[s.bubble, isUser ? s.bubbleUser : s.bubbleAI]}>
-                  <Text style={[s.bubbleText, isUser && { color: '#fff' }]}>{msg.content}</Text>
+                  {renderMessageContent(msg.content, isUser)}
                 </View>
               </View>
             );
@@ -538,7 +584,7 @@ export default function AIScreen() {
                 <View style={s.msgRow}>
                   <View style={[s.avatar, s.avatarAI]}><Text style={[s.avatarText, { color: colors.primary }]}>O</Text></View>
                   <View style={[s.bubble, s.bubbleAI, { borderColor: colors.primary + '40' }]}>
-                    <Text style={s.bubbleText}>{streaming}</Text>
+                    {renderMessageContent(streaming, false)}
                     <Text style={{ color: colors.primary }}>|</Text>
                   </View>
                 </View>
@@ -622,6 +668,9 @@ const s = StyleSheet.create({
   bubbleUser: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
   bubbleAI: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 4 },
   bubbleText: { color: colors.foreground, fontSize: 15, lineHeight: 24, fontFamily: fontFamily.reading },
+  codeBlock: { marginTop: 8, marginBottom: 8, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(0,0,0,0.55)', overflow: 'hidden' },
+  codeLang: { paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: fontFamily.sans },
+  codeText: { padding: 12, color: '#f5f5f5', fontSize: 12, lineHeight: 19, fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }) },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary },
   sessionBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, backgroundColor: colors.card },
   sessionDot: { width: 6, height: 6, borderRadius: 3 },
