@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
-import { colors, radius, spacing } from '../lib/theme';
+import { colors, radius, spacing, shadow } from '../lib/theme';
 
 // Skeleton loader - shimmer effect
 export const Skeleton = ({ width, height, borderRadius = radius.md, style }: {
@@ -77,7 +77,7 @@ export const EmptyState = ({ icon, title, subtitle }: { icon: string; title: str
 );
 
 const sk = StyleSheet.create({
-  card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
+  card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.md, borderWidth: 1, borderColor: colors.border, ...shadow.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   stat: { flex: 1 },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 12, paddingHorizontal: spacing.md },

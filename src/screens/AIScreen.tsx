@@ -9,7 +9,7 @@ import { callEdgeFunction, supabase } from '../lib/supabase';
 import { getAIConversations, saveAIConversation, clearAIConversations, AIConversationEntry } from '../services/ai';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import Svg, { Path } from 'react-native-svg';
 
 const cleanText = (t: string) => t.replace(/\{\{[^}]+\}\}/g, '').replace(/\*\*/g, '').trim();
@@ -554,7 +554,7 @@ export default function AIScreen() {
             />
             <TouchableOpacity style={[s.sendBtn, (!input.trim() || loading) && { opacity: 0.3 }]}
               onPress={handleSend} disabled={!input.trim() || loading}>
-              {loading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={s.sendBtnText}>↑</Text>}
+              {loading ? <ActivityIndicator color={colors.onPrimary} size="small" /> : <Text style={s.sendBtnText}>↑</Text>}
             </TouchableOpacity>
           </View>
         </View>
@@ -596,5 +596,5 @@ const s = StyleSheet.create({
   inputBar: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingBottom: 8 },
   input: { flex: 1, backgroundColor: colors.input, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 10, color: colors.foreground, fontSize: 14, maxHeight: 100, borderWidth: 1, borderColor: colors.border },
   sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  sendBtnText: { color: '#fff', fontSize: 18, fontWeight: '900' },
+  sendBtnText: { color: colors.onPrimary, fontSize: 18, fontWeight: '900' },
 });

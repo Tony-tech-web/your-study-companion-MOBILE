@@ -184,7 +184,7 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
               <Text style={cm.doneSub}>Your plan "{name}" is ready to be saved.</Text>
               {error ? <View style={cm.errorBox}><Text style={cm.errorText}>{error}</Text></View> : null}
               <TouchableOpacity style={[cm.saveBtn, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
-                {saving ? <ActivityIndicator color="#fff" /> : <Text style={cm.saveBtnText}>Save Plan</Text>}
+                {saving ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={cm.saveBtnText}>Save Plan</Text>}
               </TouchableOpacity>
             </View>
           )}
@@ -204,7 +204,7 @@ const cm = StyleSheet.create({
   label: { color: colors.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
   input: { backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, color: colors.foreground, fontSize: 15, borderWidth: 1, borderColor: colors.border },
   generateBtn: { backgroundColor: colors.primary, borderRadius: radius.lg, padding: spacing.md, alignItems: 'center', marginTop: spacing.sm },
-  generateBtnText: { color: '#fff', fontSize: 15, fontWeight: '800', letterSpacing: 0.2 },
+  generateBtnText: { color: colors.onPrimary, fontSize: 15, fontWeight: '800', letterSpacing: 0.2 },
   genWrap: { alignItems: 'center', paddingVertical: 60, gap: 16 },
   genText: { color: colors.foreground, fontSize: 16, fontWeight: '700' },
   genSub: { color: colors.muted, fontSize: 13 },
@@ -214,7 +214,7 @@ const cm = StyleSheet.create({
   doneTitle: { color: colors.foreground, fontSize: 22, fontWeight: '900' },
   doneSub: { color: colors.muted, fontSize: 14, textAlign: 'center' },
   saveBtn: { backgroundColor: colors.primary, borderRadius: radius.lg, paddingHorizontal: 40, paddingVertical: spacing.md, marginTop: spacing.sm },
-  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  saveBtnText: { color: colors.onPrimary, fontSize: 16, fontWeight: '800' },
   errorBox: { backgroundColor: colors.red + '18', borderRadius: radius.sm, padding: spacing.sm, borderWidth: 1, borderColor: colors.red + '30' },
   errorText: { color: colors.red, fontSize: 13 },
 });
@@ -273,7 +273,7 @@ const PlanDetail = ({ plan, onBack, onDelete }: { plan: StudyPlan; onBack: () =>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={ paddingBottom: 130 }>
+      <ScrollView contentContainerStyle={{ paddingBottom: 130 }}>
         {/* Week strip calendar */}
         <View style={pd.weekStrip}>
           {weekDays.map(d => {
@@ -473,7 +473,7 @@ export default function PlannerScreen() {
 
       <ScrollView
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
-        contentContainerStyle={ paddingBottom: 130 }>
+        contentContainerStyle={{ paddingBottom: 130 }}>
 
         {/* Calendar — always visible at top */}
         <MiniCalendar
@@ -553,7 +553,7 @@ const pl = StyleSheet.create({
   title: { color: colors.foreground, fontSize: 20, fontWeight: '800', letterSpacing: -0.5 },
   sub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   addBtn: { backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 14 },
-  addBtnText: { color: '#fff', fontSize: 13, fontWeight: '800' },
+  addBtnText: { color: colors.onPrimary, fontSize: 13, fontWeight: '800' },
   statsRow: { flexDirection: 'row', gap: 8, marginHorizontal: spacing.md, marginTop: spacing.md },
   statCard: { flex: 1, backgroundColor: colors.card, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   statValue: { color: colors.primary, fontSize: 22, fontWeight: '900' },
@@ -563,7 +563,7 @@ const pl = StyleSheet.create({
   emptyTitle: { color: colors.foreground, fontSize: 17, fontWeight: '700' },
   emptySub: { color: colors.muted, fontSize: 13 },
   emptyBtn: { marginTop: 8, backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 16 },
-  emptyBtnText: { color: '#fff', fontSize: 14, fontWeight: '800' },
+  emptyBtnText: { color: colors.onPrimary, fontSize: 14, fontWeight: '800' },
   planCard: { flexDirection: 'row', marginHorizontal: spacing.md, marginBottom: 10, backgroundColor: colors.card, borderRadius: 18, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
   planAccent: { width: 5 },
   planBody: { flex: 1, padding: 14, gap: 8 },

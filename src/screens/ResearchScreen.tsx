@@ -93,7 +93,7 @@ Focus on what this source covers, its relevance, and how a student could use it.
           returnKeyType="search" onSubmitEditing={handleSearch}
         />
         <TouchableOpacity style={[s.searchBtn, (!query.trim() || searching) && s.searchBtnDisabled]} onPress={handleSearch} disabled={!query.trim() || searching}>
-          {searching ? <ActivityIndicator color="#fff" size="small" /> : <Text style={s.searchBtnText}>Search</Text>}
+          {searching ? <ActivityIndicator color={colors.onPrimary} size="small" /> : <Text style={s.searchBtnText}>Search</Text>}
         </TouchableOpacity>
       </View>
 
@@ -204,12 +204,12 @@ const s = StyleSheet.create({
   input: { flex: 1, backgroundColor: colors.background, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, color: colors.foreground, fontSize: typography.sm, borderWidth: 1, borderColor: colors.border },
   searchBtn: { backgroundColor: colors.primary, borderRadius: radius.md, paddingHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center' },
   searchBtnDisabled: { opacity: 0.4 },
-  searchBtnText: { color: '#fff', fontWeight: '700', fontSize: typography.sm },
+  searchBtnText: { color: colors.onPrimary, fontWeight: '700', fontSize: typography.sm },
   modeRow: { flexDirection: 'row', gap: spacing.sm, padding: spacing.sm, backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border },
   modeBtn: { flex: 1, paddingVertical: spacing.sm, borderRadius: radius.md, backgroundColor: colors.background, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   modeBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   modeBtnText: { color: colors.muted, fontSize: typography.xs, fontWeight: '600' },
-  modeBtnTextActive: { color: '#fff' },
+  modeBtnTextActive: { color: colors.onPrimary },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: 130 },
   errorCard: { backgroundColor: colors.red + '15', borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.red + '30' },
   errorText: { color: colors.red, fontSize: typography.sm },
@@ -237,7 +237,7 @@ const s = StyleSheet.create({
   descTitle: { color: colors.foreground, fontSize: typography.xs, fontWeight: '700' },
   descText: { color: colors.muted, fontSize: typography.xs, lineHeight: 18 },
   copyBtn: { backgroundColor: colors.primary, borderRadius: radius.sm, padding: spacing.sm, alignItems: 'center' },
-  copyBtnText: { color: '#fff', fontSize: typography.xs, fontWeight: '700' },
+  copyBtnText: { color: colors.onPrimary, fontSize: typography.xs, fontWeight: '700' },
   sectionTitle: { color: colors.foreground, fontSize: typography.base, fontWeight: '700' },
   empty: { alignItems: 'center', padding: spacing.xl },
   emptyText: { color: colors.muted, fontSize: typography.sm },

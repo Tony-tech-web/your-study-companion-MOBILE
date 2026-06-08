@@ -198,7 +198,7 @@ export default function GPAScreen() {
               </View>
             )}
             <TouchableOpacity style={[s.saveBtn, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
-              {saving ? <ActivityIndicator color="#fff" /> : <Text style={s.saveBtnText}>Save Record</Text>}
+              {saving ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={s.saveBtnText}>Save Record</Text>}
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -212,7 +212,7 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.card },
   title: { color: colors.foreground, fontSize: typography.lg, fontWeight: '800' },
   addBtn: { backgroundColor: colors.primary, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.md },
-  addBtnText: { color: '#fff', fontSize: typography.sm, fontWeight: '700' },
+  addBtnText: { color: colors.onPrimary, fontSize: typography.sm, fontWeight: '700' },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: 120 },
   summaryRow: { flexDirection: 'row', gap: spacing.sm },
   summaryCard: { flex: 1, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
@@ -228,7 +228,7 @@ const s = StyleSheet.create({
   emptyTitle: { color: colors.foreground, fontSize: typography.lg, fontWeight: '700' },
   emptyText: { color: colors.muted, fontSize: typography.sm, textAlign: 'center' },
   emptyBtn: { backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.lg },
-  emptyBtnText: { color: '#fff', fontWeight: '700', fontSize: typography.sm },
+  emptyBtnText: { color: colors.onPrimary, fontWeight: '700', fontSize: typography.sm },
   recordCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border, gap: spacing.sm },
   recordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   recordSemester: { color: colors.foreground, fontSize: typography.base, fontWeight: '700' },
@@ -251,5 +251,5 @@ const s = StyleSheet.create({
   previewBadge: { backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
   previewText: { color: colors.muted, fontSize: typography.xs },
   saveBtn: { backgroundColor: colors.primary, borderRadius: radius.md, padding: spacing.md, alignItems: 'center', marginTop: spacing.sm },
-  saveBtnText: { color: '#fff', fontSize: typography.base, fontWeight: '700' },
+  saveBtnText: { color: colors.onPrimary, fontSize: typography.base, fontWeight: '700' },
 });

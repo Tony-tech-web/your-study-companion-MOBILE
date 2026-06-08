@@ -117,7 +117,7 @@ export default function LoginScreen() {
             </View>
 
             <TouchableOpacity style={[s.primaryBtn, loading && { opacity: 0.6 }]} onPress={handleAuth} disabled={loading}>
-              {loading ? <ActivityIndicator color="#fff" /> : (
+              {loading ? <ActivityIndicator color={colors.onPrimary} /> : (
                 <Text style={s.primaryBtnText}>{mode === 'login' ? 'Login' : 'Create Account'}</Text>
               )}
             </TouchableOpacity>
@@ -140,14 +140,14 @@ const s = StyleSheet.create({
   logoWrap: { alignItems: 'center', marginBottom: spacing.xl },
   logoRing: { width: 88, height: 88, borderRadius: 44, borderWidth: 2, borderColor: colors.primary + '40', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md },
   logoInner: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  logoText: { color: '#fff', fontSize: typography['2xl'], fontWeight: '900' },
+  logoText: { color: colors.onPrimary, fontSize: typography['2xl'], fontWeight: '900' },
   appName: { color: colors.foreground, fontSize: typography.xl, fontWeight: '800', letterSpacing: -0.5 },
   tagline: { color: colors.muted, fontSize: typography.sm, marginTop: 4 },
   modeToggle: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: radius.xl, padding: 4, borderWidth: 1, borderColor: colors.border, marginBottom: spacing.lg },
   modeBtn: { flex: 1, paddingVertical: 10, borderRadius: radius.lg, alignItems: 'center' },
   modeBtnActive: { backgroundColor: colors.primary },
   modeBtnText: { color: colors.muted, fontSize: typography.sm, fontWeight: '600' },
-  modeBtnTextActive: { color: '#fff' },
+  modeBtnTextActive: { color: colors.onPrimary },
   card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, gap: spacing.md, marginBottom: spacing.md },
   successBanner: { backgroundColor: colors.green + '18', borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.green + '30' },
   successText: { color: colors.green, fontSize: typography.xs, lineHeight: 18 },
@@ -159,7 +159,7 @@ const s = StyleSheet.create({
   eyeText: { color: colors.primary, fontSize: typography.xs, fontWeight: '600' },
   forgotText: { color: colors.primary, fontSize: typography.xs, fontWeight: '600' },
   primaryBtn: { backgroundColor: colors.primary, borderRadius: radius.lg, height: 52, alignItems: 'center', justifyContent: 'center', marginTop: spacing.xs },
-  primaryBtnText: { color: '#fff', fontSize: typography.base, fontWeight: '800' },
+  primaryBtnText: { color: colors.onPrimary, fontSize: typography.base, fontWeight: '800' },
   terms: { color: colors.muted, fontSize: typography.xs, textAlign: 'center', marginTop: spacing.lg, lineHeight: 18 },
   termsLink: { color: colors.foreground, fontWeight: '600', textDecorationLine: 'underline' },
 });

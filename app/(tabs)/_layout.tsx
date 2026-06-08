@@ -52,7 +52,7 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
                   <Path
                     d={iconPath}
-                    stroke={focused ? '#fff' : colors.muted}
+                    stroke={focused ? colors.onPrimary : colors.muted}
                     strokeWidth={focused ? 2.2 : 1.6}
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -99,18 +99,18 @@ const s = StyleSheet.create({
   },
   pill: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(16,16,18,0.97)',
+    backgroundColor: 'rgba(20,20,20,0.70)',
     borderRadius: 32,
     paddingHorizontal: 6,
     paddingVertical: 5,
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.10)',
+    borderColor: colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.45,
-    shadowRadius: 16,
+    shadowRadius: 40,
     elevation: 18,
     width: '100%',
     maxWidth: 440,
@@ -131,10 +131,10 @@ const s = StyleSheet.create({
   },
   iconWrapActive: {
     backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.45,
-    shadowRadius: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
     elevation: 5,
   },
   label: {

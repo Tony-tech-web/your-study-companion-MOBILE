@@ -1,22 +1,25 @@
 export const colors = {
-  // Dark theme (matches web)
-  primary: '#f27d26',
+  // Premium glass dark theme (matches web)
+  primary: '#ffffff',
+  onPrimary: '#0a0a0a',
   background: '#0a0a0a',
-  card: '#141414',
-  border: '#222222',
-  muted: '#666666',
+  backgroundSecondary: '#111111',
+  card: 'rgba(255,255,255,0.06)',
+  glass: 'rgba(255,255,255,0.08)',
+  glassHighlight: 'rgba(255,255,255,0.18)',
+  border: 'rgba(255,255,255,0.12)',
+  muted: 'rgba(255,255,255,0.65)',
+  tertiary: 'rgba(255,255,255,0.45)',
   foreground: '#ffffff',
-  accent: '#1c1c1c',
-  red: '#ef4444',
-  green: '#10b981',
-  blue: '#3b82f6',
+  accent: 'rgba(255,255,255,0.08)',
+  red: '#ff5c5c',
+  green: '#00d26a',
+  blue: '#4da3ff',
   yellow: '#f59e0b',
-  // iOS-style surface tints
-  surface: '#1a1a1a',
-  surfaceElevated: '#222222',
-  // Separator
-  separator: '#2a2a2a',
-  input: '#1a1a1a',
+  surface: 'rgba(255,255,255,0.05)',
+  surfaceElevated: 'rgba(255,255,255,0.08)',
+  separator: 'rgba(255,255,255,0.12)',
+  input: 'rgba(255,255,255,0.05)',
 };
 
 export const spacing = {
@@ -24,7 +27,7 @@ export const spacing = {
 };
 
 export const radius = {
-  sm: 8, md: 12, lg: 16, xl: 22, xxl: 28, full: 9999,
+  sm: 12, md: 20, lg: 24, xl: 28, xxl: 36, full: 9999,
 };
 
 export const typography = {
@@ -34,16 +37,23 @@ export const typography = {
 export const shadow = {
   sm: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 32,
     elevation: 2,
   },
   md: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.45,
+    shadowRadius: 48,
     elevation: 6,
+  },
+  floating: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 24 },
+    shadowOpacity: 0.5,
+    shadowRadius: 80,
+    elevation: 18,
   },
 };

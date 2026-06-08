@@ -141,7 +141,7 @@ const s = StyleSheet.create({
   sub: { fontSize: typography.xs, color: colors.muted, marginTop: 2 },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: 120 },
   uploadHint: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
-  uploadIconWrap: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary + '20', borderWidth: 1, borderColor: colors.primary + '40', alignItems: 'center', justifyContent: 'center', shrink: 0 },
+  uploadIconWrap: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary + '20', borderWidth: 1, borderColor: colors.primary + '40', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   uploadIconText: { color: colors.primary, fontSize: 24, fontWeight: '700', lineHeight: 28 },
   uploadTitle: { color: colors.foreground, fontSize: typography.sm, fontWeight: '700', marginBottom: 3 },
   uploadDesc: { color: colors.muted, fontSize: typography.xs, lineHeight: 16 },
