@@ -7,15 +7,26 @@
     "userInterfaceStyle": "dark",
     "scheme": "orbit",
     "splash": {
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#0a0a0a"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.elizade.orbit"
+      "bundleIdentifier": "com.elizade.orbit",
+      "splash": {
+        "image": "./assets/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#0a0a0a"
+      }
     },
     "android": {
       "adaptiveIcon": {
+        "backgroundColor": "#0a0a0a"
+      },
+      "splash": {
+        "image": "./assets/splash.png",
+        "resizeMode": "contain",
         "backgroundColor": "#0a0a0a"
       },
       "package": "com.elizade.orbit",

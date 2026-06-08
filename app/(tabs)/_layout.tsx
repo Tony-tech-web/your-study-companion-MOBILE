@@ -26,6 +26,9 @@ const labels: Record<string, string> = {
 
 function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const activeRoute = state.routes[state.index]?.name;
+
+  if (activeRoute === 'ai') return null;
 
   return (
     <View style={[s.barWrap, { paddingBottom: insets.bottom + 8 }]} pointerEvents="box-none">

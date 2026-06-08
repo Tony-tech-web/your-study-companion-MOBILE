@@ -539,9 +539,9 @@ export default function AIScreen() {
         onContinue={() => setShowEndSession(false)}
       />
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 8 : 0}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
         {/* Header */}
-        <View style={s.header}>
+        <View style={[s.header, { paddingTop: Math.max(insets.top, 12) }]}>
           <View>
             <Text style={s.title}>Orbit AI</Text>
             <View style={s.statusRow}>
@@ -563,7 +563,7 @@ export default function AIScreen() {
           ref={flatRef}
           data={messages}
           keyExtractor={(m, i) => m.id || String(i)}
-          contentContainerStyle={[s.list, { paddingBottom: 168 + insets.bottom }]}
+          contentContainerStyle={s.list}
           onContentSizeChange={() => flatRef.current?.scrollToEnd({ animated: false })}
           renderItem={({ item: msg }) => {
             const isUser = msg.role === 'user';
@@ -616,7 +616,7 @@ export default function AIScreen() {
         )}
 
         {/* Input */}
-        <View style={[s.inputWrap, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+        <View style={[s.inputWrap, { paddingBottom: Math.max(insets.bottom, 10) }]}>
           {/* Mode buttons — Chat, Teach, Test only */}
           <View style={s.modeBar}>
             {(['chat', 'teach', 'test'] as ChatMode[]).map(m => (
@@ -657,7 +657,7 @@ const s = StyleSheet.create({
   statusText: { color: colors.muted, fontSize: 11, fontWeight: '500', fontFamily: fontFamily.sans },
   clearBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: colors.border },
   clearBtnText: { color: colors.muted, fontSize: 11, fontWeight: '600', fontFamily: fontFamily.sans },
-  list: { padding: spacing.md, gap: 12, paddingBottom: 130 },
+  list: { padding: spacing.md, gap: 12, paddingBottom: spacing.lg },
   msgRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
   msgRowUser: { flexDirection: 'row-reverse' },
   avatar: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
