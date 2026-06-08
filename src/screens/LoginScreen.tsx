@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Linking from 'expo-linking';
 import { supabase } from '../lib/supabase';
 import { colors, spacing, radius, typography } from '../lib/theme';
 
@@ -36,7 +37,10 @@ export default function LoginScreen() {
         if (!fullName.trim()) { setError('Please enter your full name'); setLoading(false); return; }
         const { error } = await supabase.auth.signUp({
           email: email.trim(), password,
-          options: { data: { full_name: fullName.trim() } },
+          options: {
+            emailRedirectTo: Linking.createURL('auth-callback'),
+            data: { full_name: fullName.trim() },
+          },
         });
         if (error) throw error;
         setSuccess('Account created! Check your email for a confirmation link, then sign in.');
