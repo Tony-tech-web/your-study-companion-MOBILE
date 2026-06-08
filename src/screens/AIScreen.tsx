@@ -4,7 +4,8 @@ import {
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
   Alert, Modal, ScrollView,
 } from 'react-native';
-import { colors, spacing, radius, typography } from '../lib/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, spacing, radius, typography, fontFamily } from '../lib/theme';
 import { callEdgeFunction, supabase } from '../lib/supabase';
 import { getAIConversations, saveAIConversation, clearAIConversations, AIConversationEntry } from '../services/ai';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,7 +13,14 @@ import api from '../services/api';
 import * as FileSystem from 'expo-file-system/legacy';
 import Svg, { Path } from 'react-native-svg';
 
-const cleanText = (t: string) => t.replace(/\{\{[^}]+\}\}/g, '').replace(/\*\*/g, '').trim();
+const stripDecorativeGlyphs = (t: string) =>
+  t
+    .replace(/[0-9#*]\ufe0f?\u20e3/g, '')
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+const cleanText = (t: string) => stripDecorativeGlyphs(t.replace(/\{\{[^}]+\}\}/g, '').replace(/\*\*/g, ''));
 
 const friendlyAIError = (err: any) => {
   const raw = String(err?.message || err || '').trim();
@@ -266,6 +274,7 @@ const em = StyleSheet.create({
 // ─── Main Screen ────────────────────────────────────────────────────────────
 export default function AIScreen() {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<AIConversationEntry[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -394,8 +403,8 @@ export default function AIScreen() {
       .map(s => ({ base64: s.base64!, fileName: s.fileName }));
 
     const prompt = sessionMode === 'teach'
-      ? `Please teach me the content of the provided PDF document(s) step by step. Start with an overview, then explain each key concept clearly. I'll ask questions as we go.`
-      : `Please quiz me on the content of the provided PDF document(s). Ask me questions one at a time, wait for my answer, then give feedback before moving to the next question.`;
+      ? `Please teach me the content of the provided PDF document(s) step by step. Start with an overview, then explain each key concept clearly. Use a mature academic tone. Do not use emoji or decorative glyphs. I'll ask questions as we go.`
+      : `Please quiz me on the content of the provided PDF document(s). Ask me questions one at a time, wait for my answer, then give feedback before moving to the next question. Use a mature academic tone. Do not use emoji or decorative glyphs.`;
 
     await sendToAI(prompt, sessionMode, pdfDocs.length > 0 ? pdfDocs : undefined);
   };
@@ -469,7 +478,7 @@ export default function AIScreen() {
         onContinue={() => setShowEndSession(false)}
       />
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 8 : 0}>
         {/* Header */}
         <View style={s.header}>
           <View>
@@ -493,7 +502,7 @@ export default function AIScreen() {
           ref={flatRef}
           data={messages}
           keyExtractor={(m, i) => m.id || String(i)}
-          contentContainerStyle={s.list}
+          contentContainerStyle={[s.list, { paddingBottom: 168 + insets.bottom }]}
           onContentSizeChange={() => flatRef.current?.scrollToEnd({ animated: false })}
           renderItem={({ item: msg }) => {
             const isUser = msg.role === 'user';
@@ -515,7 +524,7 @@ export default function AIScreen() {
                   <View style={[s.avatar, s.avatarAI]}><Text style={[s.avatarText, { color: colors.primary }]}>O</Text></View>
                   <View style={[s.bubble, s.bubbleAI, { borderColor: colors.primary + '40' }]}>
                     <Text style={s.bubbleText}>{streaming}</Text>
-                    <Text style={{ color: colors.primary }}>▋</Text>
+                    <Text style={{ color: colors.primary }}>|</Text>
                   </View>
                 </View>
               ) : loading ? (
@@ -546,7 +555,7 @@ export default function AIScreen() {
         )}
 
         {/* Input */}
-        <View style={s.inputWrap}>
+        <View style={[s.inputWrap, { paddingBottom: Math.max(insets.bottom, 8) }]}>
           {/* Mode buttons — Chat, Teach, Test only */}
           <View style={s.modeBar}>
             {(['chat', 'teach', 'test'] as ChatMode[]).map(m => (
@@ -564,12 +573,12 @@ export default function AIScreen() {
           <View style={s.inputBar}>
             <TextInput
               style={s.input} value={input} onChangeText={setInput}
-              placeholder={mode === 'chat' ? 'Ask Orbit anything…' : mode === 'teach' ? 'Ask about the material…' : 'Reply to the quiz…'}
+              placeholder={mode === 'chat' ? 'Ask Orbit anything...' : mode === 'teach' ? 'Ask about the material...' : 'Reply to the quiz...'}
               placeholderTextColor={colors.muted} multiline maxLength={2000}
             />
             <TouchableOpacity style={[s.sendBtn, (!input.trim() || loading) && { opacity: 0.3 }]}
               onPress={handleSend} disabled={!input.trim() || loading}>
-              {loading ? <ActivityIndicator color={colors.onPrimary} size="small" /> : <Text style={s.sendBtnText}>↑</Text>}
+              {loading ? <ActivityIndicator color={colors.onPrimary} size="small" /> : <Text style={s.sendBtnText}>Send</Text>}
             </TouchableOpacity>
           </View>
         </View>
@@ -581,35 +590,35 @@ export default function AIScreen() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, backgroundColor: colors.card },
-  title: { color: colors.foreground, fontSize: 16, fontWeight: '800' },
+  title: { color: colors.foreground, fontSize: 17, fontWeight: '800', fontFamily: fontFamily.display },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
   statusDot: { width: 6, height: 6, borderRadius: 3 },
-  statusText: { color: colors.muted, fontSize: 11, fontWeight: '500' },
+  statusText: { color: colors.muted, fontSize: 11, fontWeight: '500', fontFamily: fontFamily.sans },
   clearBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: colors.border },
-  clearBtnText: { color: colors.muted, fontSize: 11, fontWeight: '600' },
+  clearBtnText: { color: colors.muted, fontSize: 11, fontWeight: '600', fontFamily: fontFamily.sans },
   list: { padding: spacing.md, gap: 12, paddingBottom: 130 },
   msgRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
   msgRowUser: { flexDirection: 'row-reverse' },
   avatar: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
   avatarUser: { backgroundColor: colors.primary, borderColor: colors.primary },
   avatarAI: { backgroundColor: colors.card },
-  avatarText: { fontSize: 11, fontWeight: '900', color: '#fff' },
-  bubble: { flex: 1, borderRadius: 18, padding: 14, maxWidth: '80%' },
+  avatarText: { fontSize: 11, fontWeight: '900', color: '#fff', fontFamily: fontFamily.sans },
+  bubble: { flex: 1, borderRadius: 20, padding: 14, maxWidth: '84%' },
   bubbleUser: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
   bubbleAI: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 4 },
-  bubbleText: { color: colors.foreground, fontSize: 14, lineHeight: 22 },
+  bubbleText: { color: colors.foreground, fontSize: 14, lineHeight: 22, fontFamily: fontFamily.sans },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary },
   sessionBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, backgroundColor: colors.card },
   sessionDot: { width: 6, height: 6, borderRadius: 3 },
-  sessionText: { flex: 1, fontSize: 11, fontWeight: '600' },
+  sessionText: { flex: 1, fontSize: 11, fontWeight: '600', fontFamily: fontFamily.sans },
   endBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
-  endBtnText: { fontSize: 11, fontWeight: '700' },
-  inputWrap: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, backgroundColor: colors.card, paddingBottom: Platform.OS === 'ios' ? 8 : 4 },
-  modeBar: { flexDirection: 'row', gap: 6, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 6 },
-  modeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 7, borderRadius: 16, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border },
-  modeBtnText: { color: colors.muted, fontSize: 12, fontWeight: '600' },
-  inputBar: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingBottom: 8 },
-  input: { flex: 1, backgroundColor: colors.input, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 10, color: colors.foreground, fontSize: 14, maxHeight: 100, borderWidth: 1, borderColor: colors.border },
-  sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  sendBtnText: { color: colors.onPrimary, fontSize: 18, fontWeight: '900' },
+  endBtnText: { fontSize: 11, fontWeight: '700', fontFamily: fontFamily.sans },
+  inputWrap: { width: '100%', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, backgroundColor: 'rgba(20,20,20,0.86)' },
+  modeBar: { flexDirection: 'row', gap: 8, paddingHorizontal: spacing.md, paddingTop: 10, paddingBottom: 8 },
+  modeBtn: { flex: 1, minHeight: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border },
+  modeBtnText: { color: colors.muted, fontSize: 12, fontWeight: '700', fontFamily: fontFamily.sans },
+  inputBar: { width: '100%', flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: spacing.md, paddingBottom: 8 },
+  input: { flex: 1, backgroundColor: colors.input, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, color: colors.foreground, fontSize: 14, maxHeight: 112, borderWidth: 1, borderColor: colors.border, fontFamily: fontFamily.sans },
+  sendBtn: { minWidth: 58, height: 44, paddingHorizontal: 14, borderRadius: 999, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  sendBtnText: { color: colors.onPrimary, fontSize: 13, fontWeight: '900', fontFamily: fontFamily.sans },
 });

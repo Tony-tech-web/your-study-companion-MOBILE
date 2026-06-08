@@ -34,6 +34,13 @@ export const typography = {
   xs: 11, sm: 13, base: 15, lg: 17, xl: 20, '2xl': 24, '3xl': 30, '4xl': 36,
 };
 
+export const fontFamily = {
+  sans: 'Avant Garde Gothic',
+  sansFallback: 'Avenir Next',
+  display: 'Cooper BT',
+  displayFallback: 'Georgia',
+};
+
 export const shadow = {
   sm: {
     shadowColor: '#000',
