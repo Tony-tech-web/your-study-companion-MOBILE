@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { getFullDashboardStats, getTasks, getActivity, FullStats } from '../services/dashboard';
 import { Task, StudyActivity } from '../types';
@@ -92,6 +93,7 @@ export default function DashboardScreen() {
   );
 
   return (
+    <SafeAreaView style={s.root} edges={['top']}>
     <ScrollView
       style={s.root}
       contentContainerStyle={s.content}
@@ -155,6 +157,7 @@ export default function DashboardScreen() {
         ))}
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 

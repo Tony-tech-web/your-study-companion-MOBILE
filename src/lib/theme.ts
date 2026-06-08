@@ -22,6 +22,58 @@ export const colors = {
   input: 'rgba(255,255,255,0.05)',
 };
 
+export type AppTheme = 'dark' | 'light' | 'brown';
+
+export type ThemeColors = typeof colors;
+
+export const themePalettes: Record<AppTheme, ThemeColors> = {
+  dark: colors,
+  light: {
+    primary: '#111111',
+    onPrimary: '#ffffff',
+    background: '#f3f4f6',
+    backgroundSecondary: '#ffffff',
+    card: 'rgba(255,255,255,0.82)',
+    glass: 'rgba(255,255,255,0.86)',
+    glassHighlight: 'rgba(255,255,255,0.96)',
+    border: 'rgba(9,9,11,0.14)',
+    muted: 'rgba(9,9,11,0.66)',
+    tertiary: 'rgba(9,9,11,0.44)',
+    foreground: '#09090b',
+    accent: 'rgba(9,9,11,0.06)',
+    red: '#ff5c5c',
+    green: '#00d26a',
+    blue: '#4da3ff',
+    yellow: '#f59e0b',
+    surface: 'rgba(255,255,255,0.9)',
+    surfaceElevated: 'rgba(255,255,255,0.96)',
+    separator: 'rgba(9,9,11,0.14)',
+    input: 'rgba(255,255,255,0.9)',
+  },
+  brown: {
+    primary: '#f5efe7',
+    onPrimary: '#14100c',
+    background: '#0f0d0a',
+    backgroundSecondary: '#18140f',
+    card: 'rgba(255,255,255,0.07)',
+    glass: 'rgba(24,20,15,0.74)',
+    glassHighlight: 'rgba(255,245,235,0.18)',
+    border: 'rgba(255,245,235,0.13)',
+    muted: 'rgba(255,245,235,0.66)',
+    tertiary: 'rgba(255,245,235,0.44)',
+    foreground: '#ffffff',
+    accent: 'rgba(255,245,235,0.08)',
+    red: '#ff5c5c',
+    green: '#00d26a',
+    blue: '#4da3ff',
+    yellow: '#f59e0b',
+    surface: 'rgba(255,245,235,0.06)',
+    surfaceElevated: 'rgba(255,245,235,0.08)',
+    separator: 'rgba(255,245,235,0.13)',
+    input: 'rgba(255,245,235,0.06)',
+  },
+};
+
 export const spacing = {
   xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48,
 };

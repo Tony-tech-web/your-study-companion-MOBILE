@@ -1,14 +1,50 @@
 import { useEffect, useRef, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
 import { useRouter, useSegments } from 'expo-router';
 import { Animated, Easing, Linking, StyleSheet } from 'react-native';
 import { handleDeepLink } from '../src/lib/supabase';
+import Svg, { Circle, Defs, Ellipse, G, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
+const OrbitSplashLogo = () => (
+  <Svg width={250} height={72} viewBox="0 0 250 72" fill="none">
+    <Defs>
+      <LinearGradient id="splashMetal" x1="8" y1="4" x2="60" y2="64" gradientUnits="userSpaceOnUse">
+        <Stop offset="0" stopColor="#f8fafc" />
+        <Stop offset="0.2" stopColor="#9ca3af" />
+        <Stop offset="0.44" stopColor="#ffffff" />
+        <Stop offset="0.72" stopColor="#6b7280" />
+        <Stop offset="1" stopColor="#f8fafc" />
+      </LinearGradient>
+      <LinearGradient id="splashWord" x1="70" y1="8" x2="244" y2="60" gradientUnits="userSpaceOnUse">
+        <Stop offset="0" stopColor="#ffffff" />
+        <Stop offset="0.22" stopColor="#c8ccd3" />
+        <Stop offset="0.5" stopColor="#f7f7f8" />
+        <Stop offset="0.76" stopColor="#8f96a3" />
+        <Stop offset="1" stopColor="#e5e7eb" />
+      </LinearGradient>
+    </Defs>
+    <G>
+      <Ellipse cx="35" cy="36" rx="16" ry="27" transform="rotate(38 35 36)" stroke="url(#splashMetal)" strokeWidth="6.5" />
+      <Ellipse cx="35" cy="36" rx="32" ry="9" transform="rotate(-34 35 36)" stroke="url(#splashMetal)" strokeWidth="5.5" strokeLinecap="round" />
+      <Circle cx="35" cy="36" r="14" fill="#0a0a0a" stroke="url(#splashMetal)" strokeWidth="4" />
+      <Path d="M12 52C27 42 44 27 57 10" stroke="#ffffff" strokeOpacity="0.58" strokeWidth="2" strokeLinecap="round" />
+      <SvgText
+        x="68"
+        y="50"
+        fill="url(#splashWord)"
+        fontFamily="Avenir Next"
+        fontSize="46"
+        fontWeight="900"
+        letterSpacing="-2"
+      >
+        ORBIT
+      </SvgText>
+    </G>
+  </Svg>
+);
 
 function RootLayoutNav() {
   const { session, loading } = useAuth();
@@ -36,7 +72,6 @@ function RootLayoutNav() {
 
   useEffect(() => {
     if (loading) return;
-    SplashScreen.hideAsync().catch(() => {});
 
     if (!splashStarted.current) {
       splashStarted.current = true;
@@ -75,7 +110,9 @@ function RootLayoutNav() {
       </Stack>
       {showSplashIntro && (
         <Animated.View pointerEvents="none" style={[splashStyles.overlay, { opacity: splashOpacity }]}>
-          <Animated.Text style={[splashStyles.mark, { transform: [{ scale: splashScale }] }]}>S</Animated.Text>
+          <Animated.View style={[splashStyles.logo, { transform: [{ scale: splashScale }] }]}>
+            <OrbitSplashLogo />
+          </Animated.View>
         </Animated.View>
       )}
     </>
@@ -102,11 +139,10 @@ const splashStyles = StyleSheet.create({
     elevation: 1000,
     zIndex: 1000,
   },
-  mark: {
-    color: '#ffffff',
-    fontSize: 84,
-    fontWeight: '900',
-    letterSpacing: 0,
-    lineHeight: 96,
+  logo: {
+    width: 250,
+    height: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

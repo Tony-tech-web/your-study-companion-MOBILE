@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   TextInput, ActivityIndicator, RefreshControl, Alert, Linking,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { searchResearch, getResearchHistory, deleteResearchEntry, SearchResult } from '../services/research';
@@ -78,7 +79,7 @@ Focus on what this source covers, its relevance, and how a student could use it.
   };
 
   return (
-    <View style={s.root}>
+    <SafeAreaView style={s.root} edges={['top']}>
       <View style={s.header}>
         <Text style={s.title}>Research</Text>
         <Text style={s.subtitle}>Powered by Serper + AI</Text>
@@ -191,7 +192,7 @@ Focus on what this source covers, its relevance, and how a student could use it.
           </>
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

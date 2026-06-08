@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   TextInput, Modal, ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { getGPARecords, createGPARecord, deleteGPARecord } from '../services/gpa';
 import { GPARecord } from '../types';
@@ -101,7 +102,7 @@ export default function GPAScreen() {
   );
 
   return (
-    <View style={s.root}>
+    <SafeAreaView style={s.root} edges={['top']}>
       <View style={s.header}>
         <Text style={s.title}>GPA Tracker</Text>
         <TouchableOpacity style={s.addBtn} onPress={() => setShowAdd(true)}>
@@ -203,7 +204,7 @@ export default function GPAScreen() {
           </ScrollView>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
