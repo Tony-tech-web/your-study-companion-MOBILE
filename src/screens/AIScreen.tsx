@@ -14,6 +14,21 @@ import Svg, { Path } from 'react-native-svg';
 
 const cleanText = (t: string) => t.replace(/\{\{[^}]+\}\}/g, '').replace(/\*\*/g, '').trim();
 
+const friendlyAIError = (err: any) => {
+  const raw = String(err?.message || err || '').trim();
+  const lower = raw.toLowerCase();
+  if (lower.includes('insufficient_quota') || lower.includes('429') || lower.includes('quota')) {
+    return 'Orbit could not generate a response because the active AI provider is out of quota. Check the provider key or billing in Supabase, then try again.';
+  }
+  if (lower.includes('all ai providers failed') || lower.includes('provider')) {
+    return 'Orbit could not reach an available AI provider right now. Check API Status and the Supabase provider secrets.';
+  }
+  if (lower.includes('network') || lower.includes('failed to fetch')) {
+    return 'Orbit could not connect to the AI service. Please check the connection and try again.';
+  }
+  return 'Orbit could not generate a response. Please try again in a moment.';
+};
+
 type ChatMode = 'chat' | 'teach' | 'test';
 
 interface StudentPdf {
@@ -365,7 +380,7 @@ export default function AIScreen() {
       setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (e: any) {
       setStreaming('');
-      const errMsg = `Error: ${e.message}`;
+      const errMsg = friendlyAIError(e);
       setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: errMsg, created_at: new Date().toISOString() }]);
     } finally { setLoading(false); }
   };
