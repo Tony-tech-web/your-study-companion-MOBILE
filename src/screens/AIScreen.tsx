@@ -17,10 +17,25 @@ const stripDecorativeGlyphs = (t: string) =>
   t
     .replace(/[0-9#*]\ufe0f?\u20e3/g, '')
     .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
-    .replace(/\s{2,}/g, ' ')
+    .replace(/[ \t]{2,}/g, ' ')
     .trim();
 
-const cleanText = (t: string) => stripDecorativeGlyphs(t.replace(/\{\{[^}]+\}\}/g, '').replace(/\*\*/g, ''));
+const normalizePipeText = (text: string) => text
+  .split('\n')
+  .map(line => {
+    const stripped = line.trim();
+    if (/^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(stripped)) return '';
+    const cells = stripped.split('|').map(cell => cell.trim()).filter(Boolean);
+    if (cells.length < 2) return line;
+    return [cells[0], ...cells.slice(1).map(cell => `  ${cell}`)].join('\n');
+  })
+  .join('\n')
+  .replace(/\n{3,}/g, '\n\n');
+
+const cleanText = (t: string) => normalizePipeText(stripDecorativeGlyphs(t.replace(/\{\{[^}]+\}\}/g, '').replace(/\*\*/g, '')));
+
+const AI_RESPONSE_STYLE =
+  'Use a mature academic tone. Use short headings, compact paragraphs, and bullets for comparisons. Do not use emoji, decorative glyphs, or markdown pipe tables unless the user explicitly asks for a table.';
 
 const friendlyAIError = (err: any) => {
   const raw = String(err?.message || err || '').trim();
@@ -351,7 +366,7 @@ export default function AIScreen() {
       const history = messages.slice(-6).map(m => ({ role: m.role, content: m.content }));
 
       const res = await callEdgeFunction('ai-chat', {
-        messages: [...history, { role: 'user', content: text }],
+        messages: [{ role: 'system', content: AI_RESPONSE_STYLE }, ...history, { role: 'user', content: text }],
         providerId: 'auto',
         mode: overrideMode ?? mode,
         ...(pdfDocs && pdfDocs.length > 0 ? { pdfDocuments: pdfDocs } : {}),
@@ -403,8 +418,8 @@ export default function AIScreen() {
       .map(s => ({ base64: s.base64!, fileName: s.fileName }));
 
     const prompt = sessionMode === 'teach'
-      ? `Please teach me the content of the provided PDF document(s) step by step. Start with an overview, then explain each key concept clearly. Use a mature academic tone. Do not use emoji or decorative glyphs. I'll ask questions as we go.`
-      : `Please quiz me on the content of the provided PDF document(s). Ask me questions one at a time, wait for my answer, then give feedback before moving to the next question. Use a mature academic tone. Do not use emoji or decorative glyphs.`;
+      ? `Please teach me the content of the provided PDF document(s) step by step. Start with an overview, then explain each key concept clearly. Use a mature academic tone. Do not use emoji, decorative glyphs, or markdown pipe tables. I'll ask questions as we go.`
+      : `Please quiz me on the content of the provided PDF document(s). Ask me questions one at a time, wait for my answer, then give feedback before moving to the next question. Use a mature academic tone. Do not use emoji, decorative glyphs, or markdown pipe tables.`;
 
     await sendToAI(prompt, sessionMode, pdfDocs.length > 0 ? pdfDocs : undefined);
   };
@@ -606,7 +621,7 @@ const s = StyleSheet.create({
   bubble: { flex: 1, borderRadius: 20, padding: 14, maxWidth: '84%' },
   bubbleUser: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
   bubbleAI: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 4 },
-  bubbleText: { color: colors.foreground, fontSize: 14, lineHeight: 22, fontFamily: fontFamily.sans },
+  bubbleText: { color: colors.foreground, fontSize: 15, lineHeight: 24, fontFamily: fontFamily.reading },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary },
   sessionBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, backgroundColor: colors.card },
   sessionDot: { width: 6, height: 6, borderRadius: 3 },
@@ -618,7 +633,7 @@ const s = StyleSheet.create({
   modeBtn: { flex: 1, minHeight: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border },
   modeBtnText: { color: colors.muted, fontSize: 12, fontWeight: '700', fontFamily: fontFamily.sans },
   inputBar: { width: '100%', flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: spacing.md, paddingBottom: 8 },
-  input: { flex: 1, backgroundColor: colors.input, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, color: colors.foreground, fontSize: 14, maxHeight: 112, borderWidth: 1, borderColor: colors.border, fontFamily: fontFamily.sans },
+  input: { flex: 1, backgroundColor: colors.input, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, color: colors.foreground, fontSize: 15, maxHeight: 112, borderWidth: 1, borderColor: colors.border, fontFamily: fontFamily.reading },
   sendBtn: { minWidth: 58, height: 44, paddingHorizontal: 14, borderRadius: 999, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   sendBtnText: { color: colors.onPrimary, fontSize: 13, fontWeight: '900', fontFamily: fontFamily.sans },
 });

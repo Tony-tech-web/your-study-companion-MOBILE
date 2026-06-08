@@ -35,8 +35,9 @@ export const typography = {
 };
 
 export const fontFamily = {
-  sans: 'Avant Garde Gothic',
-  sansFallback: 'Avenir Next',
+  brand: 'Avant Garde Gothic',
+  sans: 'Avenir Next',
+  reading: 'Avenir Next',
   display: 'Cooper BT',
   displayFallback: 'Georgia',
 };
