@@ -214,8 +214,18 @@ export default function SettingsScreen() {
           })}
         </View>
 
+        <TouchableOpacity activeOpacity={0.84} style={s.billingCard} onPress={() => router.push('/billing')}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={s.billingEyebrow}>Subscription</Text>
+            <Text style={s.billingTitle}>Plans and AI usage</Text>
+            <Text style={s.billingSub}>Review payment, provider allocation, and token allowance.</Text>
+          </View>
+          <View style={s.billingButton}>
+            <Text style={s.billingButtonText}>Open</Text>
+          </View>
+        </TouchableOpacity>
+
         <Section title="Account" colors={colors} theme={theme}>
-          <ActionRow colors={colors} title="Plans and subscription" detail="Paystack checkout and billing history" value="Open" onPress={() => router.push('/billing')} />
           <ActionRow colors={colors} title="Email confirmation" detail={user?.email || ''} value={user?.email_confirmed_at ? 'Verified' : 'Pending'} tone={user?.email_confirmed_at ? 'success' : 'warning'} />
         </Section>
 
@@ -342,12 +352,12 @@ const usageStyles = (colors: any) => StyleSheet.create({
 
 const styles = (colors: any, theme: string) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  content: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: 150, gap: spacing.md },
+  content: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: 150, gap: spacing.sm },
   header: { gap: 2 },
   eyebrow: { color: colors.muted, fontFamily: fontFamily.sans, fontSize: 11, fontWeight: '900', textTransform: 'uppercase' },
   title: { color: colors.foreground, fontFamily: fontFamily.display, fontSize: 30, fontWeight: '900' },
   profileCard: {
-    minHeight: 236,
+    minHeight: 208,
     borderRadius: radius.xxl,
     borderWidth: 1,
     borderColor: colors.border,
@@ -356,21 +366,21 @@ const styles = (colors: any, theme: string) => StyleSheet.create({
     ...shadow.md,
   },
   profileCover: {
-    height: 82,
-    backgroundColor: theme === 'light' ? 'rgba(9,9,11,0.08)' : 'rgba(255,255,255,0.1)',
+    height: 74,
+    backgroundColor: theme === 'light' ? 'rgba(9,9,11,0.06)' : 'rgba(255,255,255,0.075)',
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   profileBody: { padding: spacing.md, paddingTop: 0 },
   avatar: {
-    width: 76,
-    height: 76,
-    borderRadius: 30,
-    marginTop: -38,
+    width: 66,
+    height: 66,
+    borderRadius: 26,
+    marginTop: -33,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primary,
-    borderWidth: 4,
+    borderWidth: 3,
     borderColor: colors.background,
   },
   avatarText: { color: colors.onPrimary, fontFamily: fontFamily.sans, fontSize: typography.lg, fontWeight: '900' },
@@ -386,8 +396,8 @@ const styles = (colors: any, theme: string) => StyleSheet.create({
     backgroundColor: colors.primary,
   },
   editText: { color: colors.onPrimary, fontFamily: fontFamily.sans, fontSize: 12, fontWeight: '900' },
-  profileText: { marginTop: spacing.sm, gap: 3 },
-  profileName: { color: colors.foreground, fontFamily: fontFamily.display, fontSize: 24, fontWeight: '900' },
+  profileText: { marginTop: spacing.sm, gap: 2 },
+  profileName: { color: colors.foreground, fontFamily: fontFamily.display, fontSize: 22, fontWeight: '900' },
   profileEmail: { color: colors.muted, fontFamily: fontFamily.sans, fontSize: 12, fontWeight: '700' },
   profileField: { color: colors.tertiary, fontFamily: fontFamily.sans, fontSize: 12, fontWeight: '700' },
   editStack: { marginTop: spacing.md, gap: spacing.sm },
@@ -406,7 +416,7 @@ const styles = (colors: any, theme: string) => StyleSheet.create({
   saveBtn: { height: 46, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
   saveText: { color: colors.onPrimary, fontFamily: fontFamily.sans, fontSize: typography.sm, fontWeight: '900' },
   themeSwitch: {
-    height: 48,
+    height: 46,
     flexDirection: 'row',
     borderRadius: radius.full,
     borderWidth: 1,
@@ -418,6 +428,22 @@ const styles = (colors: any, theme: string) => StyleSheet.create({
   themeSegmentActive: { backgroundColor: colors.primary },
   themeText: { color: colors.muted, fontFamily: fontFamily.sans, fontSize: 12, fontWeight: '900' },
   themeTextActive: { color: colors.onPrimary },
+  billingCard: {
+    minHeight: 112,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.84)' : colors.surface,
+    padding: spacing.md,
+  },
+  billingEyebrow: { color: colors.muted, fontFamily: fontFamily.sans, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 },
+  billingTitle: { color: colors.foreground, fontFamily: fontFamily.display, fontSize: 19, fontWeight: '900', marginTop: 2 },
+  billingSub: { color: colors.muted, fontFamily: fontFamily.sans, fontSize: 12, lineHeight: 17, marginTop: 4 },
+  billingButton: { height: 38, paddingHorizontal: 16, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
+  billingButtonText: { color: colors.onPrimary, fontFamily: fontFamily.sans, fontSize: 12, fontWeight: '900' },
   section: { gap: spacing.xs },
   sectionTitle: { color: colors.foreground, fontFamily: fontFamily.sans, fontSize: 13, fontWeight: '900', paddingHorizontal: 2 },
   sectionPanel: {

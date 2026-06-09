@@ -654,7 +654,8 @@ export default function PlannerScreen() {
   }, [plans, calYear, calMonth]);
 
   const selectedSessions = useMemo(() => plans.flatMap((plan, planIndex) =>
-    (plan.scheduleBlocks || []).filter(block => block.day === selectedDate.getDay()).map(block => ({
+    (plan.scheduleBlocks || []).filter(block => block.day === selectedDate.getDay()).map((block, blockIndex) => ({
+      key: `${plan.id}-${planIndex}-${blockIndex}-${block.day}-${block.hour}-${getBlockMinute(block)}-${block.subject}`,
       plan,
       block,
       color: block.color || PLAN_COLORS[planIndex % PLAN_COLORS.length],
@@ -764,12 +765,12 @@ export default function PlannerScreen() {
         ) : (
           <View style={pl.dayActionCard}>
             <Text style={pl.dayActionTitle}>Scheduled sessions</Text>
-            {selectedSessions.map(({ plan, block, color }) => (
-              <View key={`${plan.id}-${block.day}-${block.hour}-${getBlockMinute(block)}-${block.subject}`} style={pl.daySession}>
+            {selectedSessions.map(({ key, plan, block, color }) => (
+              <View key={key} style={pl.daySession}>
                 <View style={[pl.daySessionBar, { backgroundColor: color }]} />
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={pl.daySessionTitle} numberOfLines={1}>{block.subject}</Text>
-                  <Text style={pl.daySessionMeta}>{plan.name} · {formatBlockTime(block)} · {formatDuration(block)}</Text>
+                  <Text style={pl.daySessionMeta}>{plan.name} - {formatBlockTime(block)} - {formatDuration(block)}</Text>
                 </View>
                 <TouchableOpacity style={pl.daySessionBtn} onPress={() => { setEditingPlan(plan); setShowCreate(true); }}>
                   <Text style={pl.daySessionBtnText}>Modify</Text>
@@ -801,8 +802,8 @@ export default function PlannerScreen() {
                 </TouchableOpacity>
               </View>
               <View style={pl.planMeta}>
-                {plan.subjects.slice(0,3).map(sub => (
-                  <View key={sub} style={[pl.subjectChip, { backgroundColor: PLAN_COLORS[i % PLAN_COLORS.length] + '18' }]}>
+                {plan.subjects.slice(0,3).map((sub, subjectIndex) => (
+                  <View key={`${plan.id}-${subjectIndex}-${sub}`} style={[pl.subjectChip, { backgroundColor: PLAN_COLORS[i % PLAN_COLORS.length] + '18' }]}>
                     <Text style={[pl.subjectChipText, { color: PLAN_COLORS[i % PLAN_COLORS.length] }]}>{sub}</Text>
                   </View>
                 ))}

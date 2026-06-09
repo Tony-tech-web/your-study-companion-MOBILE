@@ -89,6 +89,9 @@ export default function LeaderboardScreen() {
   const { entries, myRank } = result;
   const top3 = entries.slice(0, 3);
   const rest = entries.slice(3);
+  const myEntry = entries.find(entry => entry.user_id === user?.id);
+  const myName = myEntry?.name || user?.email?.split('@')[0] || 'Student';
+  const myInitials = myName.slice(0, 2).toUpperCase();
 
   return (
     <ScrollView
@@ -96,23 +99,30 @@ export default function LeaderboardScreen() {
       contentContainerStyle={s.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
     >
-      <Text style={s.title}>Leaderboard</Text>
+      <View style={s.header}>
+        <Text style={s.eyebrow}>Orbit rankings</Text>
+        <Text style={s.title}>Leaderboard</Text>
+        <Text style={s.subtitle}>{entries.length} student{entries.length === 1 ? '' : 's'} ranked by real XP</Text>
+      </View>
 
-      {/* My rank card */}
       {myRank && (
         <View style={s.myRankCard}>
-          <Text style={s.myRankLabel}>Your Rank</Text>
-          <View style={s.myRankRow}>
-            <Text style={s.myRankNum}>#{myRank.rank}</Text>
-            <View>
-              <Text style={s.myRankXp}>{myRank.xp} XP</Text>
-              <Text style={s.myRankTitle}>{myRank.title}</Text>
+          <View style={s.profileCover} />
+          <View style={s.myRankBody}>
+            <View style={s.profileAvatar}>
+              {myEntry?.avatar ? <Image source={{ uri: myEntry.avatar }} style={s.profileAvatarImg} /> : <Text style={s.profileAvatarText}>{myInitials}</Text>}
+            </View>
+            <Text style={s.profileName} numberOfLines={1}>{myName}</Text>
+            <Text style={s.profileTitle} numberOfLines={1}>{myRank.title}</Text>
+            <View style={s.profileStats}>
+              <View style={s.profileStat}><Text style={s.profileStatValue}>#{myRank.rank}</Text><Text style={s.profileStatLabel}>Rank</Text></View>
+              <View style={s.profileStat}><Text style={s.profileStatValue}>{myRank.xp}</Text><Text style={s.profileStatLabel}>XP</Text></View>
+              <View style={s.profileStat}><Text style={s.profileStatValue}>{myRank.level || 1}</Text><Text style={s.profileStatLabel}>Level</Text></View>
             </View>
           </View>
         </View>
       )}
 
-      {/* Podium */}
       {top3.length > 0 && (
         <View style={s.podium}>
           {/* 2nd */}
@@ -148,7 +158,7 @@ export default function LeaderboardScreen() {
         </View>
       )}
 
-      {/* Rest of leaderboard */}
+      <Text style={s.sectionTitle}>All students</Text>
       {rest.map((entry, i) => {
         const isMe = entry.user_id === user?.id;
         return (
@@ -169,9 +179,12 @@ export default function LeaderboardScreen() {
 
 const styles = (colors: any) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.md, gap: spacing.md, paddingBottom: 130 },
+  content: { padding: spacing.lg, gap: spacing.md, paddingBottom: 140 },
   center: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  title: { color: colors.foreground, fontSize: typography['2xl'], fontWeight: '800' },
+  header: { gap: 2 },
+  eyebrow: { color: colors.muted, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 },
+  title: { color: colors.foreground, fontSize: 30, fontWeight: '900' },
+  subtitle: { color: colors.muted, fontSize: 12, fontWeight: '700' },
 
   errorTitle: { color: colors.foreground, fontSize: typography.lg, fontWeight: '700' },
   errorText: { color: colors.muted, fontSize: typography.sm, textAlign: 'center', paddingHorizontal: spacing.lg },
@@ -184,13 +197,19 @@ const styles = (colors: any) => StyleSheet.create({
   medalText: { color: "#fff", fontSize: 11, fontWeight: "900" },
   retryBtn: { backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.md },
   retryBtnText: { color: colors.onPrimary, fontWeight: '700' },
-  myRankCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.primary + '50' },
-  myRankLabel: { color: colors.muted, fontSize: typography.xs, marginBottom: spacing.sm },
-  myRankRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  myRankNum: { color: colors.primary, fontSize: typography['3xl'], fontWeight: '900' },
-  myRankXp: { color: colors.foreground, fontSize: typography.lg, fontWeight: '700' },
-  myRankTitle: { color: colors.muted, fontSize: typography.xs },
-  podium: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.lg },
+  myRankCard: { minHeight: 260, backgroundColor: colors.card, borderRadius: 32, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+  profileCover: { height: 84, backgroundColor: colors.input, borderBottomWidth: 1, borderBottomColor: colors.border },
+  myRankBody: { alignItems: 'center', padding: spacing.md, paddingTop: 0 },
+  profileAvatar: { width: 86, height: 86, borderRadius: 34, marginTop: -43, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary, borderWidth: 4, borderColor: colors.background, overflow: 'hidden' },
+  profileAvatarImg: { width: '100%', height: '100%' },
+  profileAvatarText: { color: colors.onPrimary, fontSize: 22, fontWeight: '900' },
+  profileName: { color: colors.foreground, fontSize: 22, fontWeight: '900', marginTop: spacing.sm },
+  profileTitle: { color: colors.muted, fontSize: 12, fontWeight: '700', marginTop: 2 },
+  profileStats: { width: '100%', flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  profileStat: { flex: 1, minHeight: 64, borderRadius: radius.lg, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+  profileStatValue: { color: colors.foreground, fontSize: 17, fontWeight: '900' },
+  profileStatLabel: { color: colors.muted, fontSize: 10, fontWeight: '900', marginTop: 2, textTransform: 'uppercase' },
+  podium: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: spacing.sm, padding: spacing.md, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card },
   podiumItem: { alignItems: 'center', flex: 1 },
   podiumFirst: {},
   podiumSecond: {},
@@ -200,7 +219,8 @@ const styles = (colors: any) => StyleSheet.create({
   podiumAvatarFirst: { width: 60, height: 60, borderRadius: 30, borderColor: colors.primary },
   podiumName: { color: colors.foreground, fontSize: typography.xs, fontWeight: '700', textAlign: 'center' },
   podiumXp: { color: colors.primary, fontSize: 10, fontWeight: '600', marginBottom: 4 },
-  podiumBar: { width: '100%', backgroundColor: colors.card, borderTopLeftRadius: 4, borderTopRightRadius: 4, borderWidth: 1, borderColor: colors.border },
+  podiumBar: { width: '100%', backgroundColor: colors.input, borderTopLeftRadius: 12, borderTopRightRadius: 12, borderWidth: 1, borderColor: colors.border },
+  sectionTitle: { color: colors.foreground, fontSize: 14, fontWeight: '900', marginTop: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
   rowMe: { borderColor: colors.primary },
   rowRank: { color: colors.muted, fontSize: typography.sm, fontWeight: '700', width: 32 },

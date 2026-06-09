@@ -37,13 +37,13 @@ const getBreakdown = (plan: BillingPlan) => {
 };
 
 export default function BillingScreen() {
-  const { colors } = useMobileTheme();
+  const { colors, theme } = useMobileTheme();
   const [plans, setPlans] = useState<BillingPlan[]>([]);
   const [status, setStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<BillingPlan | null>(null);
-  const s = styles(colors);
+  const s = styles(colors, theme);
 
   useEffect(() => {
     Promise.all([getBillingPlans(), getBillingStatus()])
@@ -163,9 +163,16 @@ export default function BillingScreen() {
                   <Text style={s.interval}>{intervalLabel[plan.interval]}</Text>
 
                   <View style={s.features}>
-                    <Text style={s.feature}>{plan.ai_token_limit ? `${plan.ai_token_limit.toLocaleString()} AI tokens` : 'Custom AI limit'}</Text>
-                    <Text style={s.feature}>Research, chat, planner, and study tools</Text>
-                    <Text style={s.feature}>Server verified subscription status</Text>
+                    {[
+                      plan.ai_token_limit ? `${plan.ai_token_limit.toLocaleString()} AI tokens` : 'Custom AI limit',
+                      'Research, chat, planner, and study tools',
+                      'Server verified subscription status',
+                    ].map(feature => (
+                      <View key={feature} style={s.featureRow}>
+                        <View style={s.featureMark}><Text style={s.featureMarkText}>✓</Text></View>
+                        <Text style={s.feature}>{feature}</Text>
+                      </View>
+                    ))}
                   </View>
 
                   <TouchableOpacity
@@ -207,7 +214,7 @@ const priceRowStyles = StyleSheet.create({
   value: { fontWeight: '900' },
 });
 
-const styles = (colors: any) => StyleSheet.create({
+const styles = (colors: any, theme: string) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   modalBackdrop: { flex: 1, justifyContent: 'center', padding: spacing.lg, backgroundColor: 'rgba(0,0,0,0.72)' },
   reviewCard: { borderRadius: 30, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, padding: spacing.lg, gap: spacing.md },
@@ -230,23 +237,36 @@ const styles = (colors: any) => StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: 150, gap: spacing.lg },
   header: { gap: 6 },
   eyebrow: { color: colors.muted, fontSize: typography.xs, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
-  title: { color: colors.foreground, fontSize: 30, fontWeight: '900' },
+  title: { color: colors.foreground, fontSize: 31, fontWeight: '900' },
   sub: { color: colors.muted, fontSize: typography.sm, lineHeight: 20 },
   currentCard: { borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, padding: spacing.md },
   currentLabel: { color: colors.muted, fontSize: typography.xs, fontWeight: '900', textTransform: 'uppercase' },
   currentName: { color: colors.foreground, fontSize: typography.lg, fontWeight: '900', marginTop: 4 },
   loader: { borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, padding: spacing.xl },
   planList: { gap: spacing.md },
-  planCard: { minHeight: 340, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, padding: spacing.lg },
-  planCardFeatured: { borderColor: colors.blue, backgroundColor: colors.blue + '18' },
+  planCard: {
+    minHeight: 330,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.92)' : colors.card,
+    padding: spacing.lg,
+  },
+  planCardFeatured: {
+    borderColor: theme === 'light' ? 'rgba(17,17,17,0.22)' : colors.border,
+    backgroundColor: theme === 'light' ? '#ffffff' : 'rgba(255,255,255,0.08)',
+  },
   planTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   planName: { color: colors.foreground, fontSize: typography.xl, fontWeight: '900' },
   planDescription: { color: colors.muted, fontSize: typography.sm, lineHeight: 19, marginTop: 6 },
   badge: { color: colors.blue, borderColor: colors.blue + '55', borderWidth: 1, borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 5, fontSize: typography.xs, fontWeight: '900' },
-  price: { color: colors.foreground, fontSize: 34, fontWeight: '900', marginTop: spacing.xl },
+  price: { color: colors.foreground, fontSize: 36, fontWeight: '900', marginTop: spacing.xl },
   interval: { color: colors.muted, fontSize: typography.xs, fontWeight: '800', marginTop: 3 },
-  features: { gap: 10, marginTop: spacing.lg },
-  feature: { color: colors.muted, fontSize: typography.sm, fontWeight: '700' },
+  features: { gap: 11, marginTop: spacing.lg },
+  featureRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  featureMark: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.foreground },
+  featureMarkText: { color: colors.background, fontSize: 10, fontWeight: '900' },
+  feature: { flex: 1, color: colors.muted, fontSize: typography.sm, fontWeight: '700', lineHeight: 18 },
   action: { marginTop: 'auto', height: 52, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input },
   actionFeatured: { backgroundColor: colors.primary, borderColor: colors.primary },
   actionDisabled: { opacity: 0.6 },

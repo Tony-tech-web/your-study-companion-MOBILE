@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  ImageBackground,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -16,6 +17,11 @@ import { StudyActivity, Task } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
 const dayOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const actionArtwork = {
+  ai: require('../../assets/dashboard/ai-card.png'),
+  planner: require('../../assets/dashboard/planner-card.png'),
+  research: require('../../assets/dashboard/research-card.png'),
+};
 
 export default function DashboardScreen() {
   const { user } = useAuth();
@@ -52,6 +58,27 @@ export default function DashboardScreen() {
     ? stats.user.name
     : user?.email?.split('@')[0] || 'Scholar';
   const initials = displayName.slice(0, 2).toUpperCase();
+  const actionCards = [
+    {
+      title: 'AI Assistant',
+      meta: 'Chat, teach, test',
+      artwork: actionArtwork.ai,
+      onPress: () => router.push('/ai'),
+      wide: true,
+    },
+    {
+      title: 'Planner',
+      meta: `${tasks.length} active`,
+      artwork: actionArtwork.planner,
+      onPress: () => router.push('/planner'),
+    },
+    {
+      title: 'Research',
+      meta: `${stats?.researchMinutes || 0}m logged`,
+      artwork: actionArtwork.research,
+      onPress: () => router.push('/research'),
+    },
+  ];
 
   if (loading) {
     return (
@@ -111,6 +138,14 @@ export default function DashboardScreen() {
             <View style={[s.xpFill, { width: `${xpProgress * 100}%` }]} />
           </View>
           <Text style={s.heroSub}>{stats?.user.xp || 0} of {stats?.user.maxXp || 200} XP confirmed from real activity.</Text>
+          <View style={s.heroActions}>
+            <TouchableOpacity activeOpacity={0.82} style={s.heroActionPrimary} onPress={() => router.push('/ai')}>
+              <Text style={s.heroActionPrimaryText}>Ask Orbit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.82} style={s.heroActionGhost} onPress={() => router.push('/planner')}>
+              <Text style={s.heroActionGhostText}>Plan week</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={s.statsGrid}>
@@ -118,6 +153,18 @@ export default function DashboardScreen() {
           <MetricCard colors={colors} label="AI" value={String(stats?.aiInteractions || 0)} detail="Sessions" />
           <MetricCard colors={colors} label="Study" value={`${stats?.studyMinutes || 0}m`} detail="Tracked" />
           <MetricCard colors={colors} label="Research" value={`${stats?.researchMinutes || 0}m`} detail="Logged" />
+        </View>
+
+        <View style={s.section}>
+          <View style={s.sectionHead}>
+            <Text style={s.sectionTitle}>Workspace</Text>
+            <Text style={s.sectionHint}>Live tools</Text>
+          </View>
+          <View style={s.actionGrid}>
+            {actionCards.map(card => (
+              <DashboardActionCard key={card.title} colors={colors} card={card} />
+            ))}
+          </View>
         </View>
 
         <View style={s.section}>
@@ -156,10 +203,10 @@ export default function DashboardScreen() {
                   <View style={[s.planStatus, task.completed && s.planStatusDone]}>
                     {task.completed && <Text style={s.checkMark}>✓</Text>}
                   </View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={s.planTitle} numberOfLines={1}>{task.title}</Text>
-                    <Text style={s.planMeta} numberOfLines={1}>{task.category} · {task.dueDate}</Text>
-                  </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={s.planTitle} numberOfLines={1}>{task.title}</Text>
+                  <Text style={s.planMeta} numberOfLines={1}>{task.category} - {task.dueDate}</Text>
+                </View>
                 </TouchableOpacity>
               ))}
             </View>
@@ -178,6 +225,28 @@ function MetricCard({ colors, label, value, detail }: { colors: any; label: stri
       <Text style={cardStyles.value} numberOfLines={1}>{value}</Text>
       <Text style={cardStyles.detail}>{detail}</Text>
     </View>
+  );
+}
+
+function DashboardActionCard({ colors, card }: { colors: any; card: { title: string; meta: string; artwork: any; onPress: () => void; wide?: boolean } }) {
+  const cardStyles = actionCardStyles(colors);
+  return (
+    <TouchableOpacity
+      activeOpacity={0.84}
+      onPress={card.onPress}
+      style={[cardStyles.card, card.wide && cardStyles.cardWide]}
+    >
+      <ImageBackground source={card.artwork} style={cardStyles.art} imageStyle={cardStyles.artImage}>
+        <View style={cardStyles.scrim} />
+        <View style={cardStyles.copy}>
+          <Text style={cardStyles.title} numberOfLines={1}>{card.title}</Text>
+          <Text style={cardStyles.meta} numberOfLines={1}>{card.meta}</Text>
+        </View>
+        <View style={cardStyles.openPill}>
+          <Text style={cardStyles.openText}>Open</Text>
+        </View>
+      </ImageBackground>
+    </TouchableOpacity>
   );
 }
 
@@ -211,6 +280,40 @@ const metricStyles = (colors: any) => StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
+});
+
+const actionCardStyles = (colors: any) => StyleSheet.create({
+  card: {
+    width: '48.5%',
+    height: 174,
+    borderRadius: 28,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+    ...shadow.md,
+  },
+  cardWide: { width: '100%', height: 190 },
+  art: { flex: 1, justifyContent: 'space-between', padding: spacing.md },
+  artImage: { resizeMode: 'cover' },
+  scrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.16)',
+  },
+  copy: { gap: 3, maxWidth: '78%' },
+  title: { color: '#fff', fontFamily: fontFamily.display, fontSize: 18, fontWeight: '900' },
+  meta: { color: 'rgba(255,255,255,0.68)', fontFamily: fontFamily.sans, fontSize: 12, fontWeight: '800' },
+  openPill: {
+    alignSelf: 'flex-start',
+    minWidth: 62,
+    height: 34,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    paddingHorizontal: 14,
+  },
+  openText: { color: '#0A0A0A', fontFamily: fontFamily.sans, fontSize: 12, fontWeight: '900' },
 });
 
 const styles = (colors: any, theme: string) => StyleSheet.create({
@@ -257,7 +360,7 @@ const styles = (colors: any, theme: string) => StyleSheet.create({
   },
   avatarText: { color: colors.onPrimary, fontFamily: fontFamily.sans, fontSize: typography.sm, fontWeight: '900' },
   heroCard: {
-    minHeight: 172,
+    minHeight: 214,
     borderRadius: radius.xxl,
     borderWidth: 1,
     borderColor: colors.border,
@@ -283,7 +386,13 @@ const styles = (colors: any, theme: string) => StyleSheet.create({
   xpTrack: { height: 8, borderRadius: 999, backgroundColor: colors.border, overflow: 'hidden', marginTop: spacing.lg },
   xpFill: { height: '100%', borderRadius: 999, backgroundColor: colors.primary },
   heroSub: { color: colors.muted, fontFamily: fontFamily.sans, fontSize: 12, lineHeight: 18, marginTop: spacing.md },
+  heroActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  heroActionPrimary: { flex: 1, height: 44, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
+  heroActionPrimaryText: { color: colors.onPrimary, fontFamily: fontFamily.sans, fontSize: 13, fontWeight: '900' },
+  heroActionGhost: { flex: 1, height: 44, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border },
+  heroActionGhostText: { color: colors.foreground, fontFamily: fontFamily.sans, fontSize: 13, fontWeight: '900' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.sm },
+  actionGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.sm },
   section: { gap: spacing.sm },
   sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sectionTitle: { color: colors.foreground, fontFamily: fontFamily.sans, fontSize: typography.base, fontWeight: '900' },
