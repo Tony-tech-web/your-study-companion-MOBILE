@@ -4,13 +4,14 @@ import {
   TextInput, Modal, ActivityIndicator, RefreshControl, Alert,
   Dimensions,
 } from 'react-native';
-import { colors, spacing, radius, typography } from '../lib/theme';
+import { spacing, radius, typography } from '../lib/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getStudyPlans, createStudyPlan, updateStudyPlan, deleteStudyPlan, randomizeStudyPlan } from '../services/planner';
 import { callEdgeFunction } from '../lib/supabase';
 import { StudyPlan, StudyPlanBlock } from '../types';
 import { getBillingUsage, recordAiUsageEvent } from '../services/billing';
 import { scheduleStudyReminder } from '../services/notifications';
+import { useMobileTheme } from '../contexts/ThemeContext';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const PLAN_COLORS = ['#6366f1','#10b981','#f27d26','#8b5cf6','#f59e0b','#ef4444'];
@@ -74,6 +75,8 @@ const MiniCalendar = ({
   planDates: Set<string>; currentYear: number; currentMonth: number;
   onPrevMonth: () => void; onNextMonth: () => void;
 }) => {
+  const { colors } = useMobileTheme();
+  const cal = calStyles(colors);
   const today = new Date();
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
@@ -121,7 +124,7 @@ const MiniCalendar = ({
   );
 };
 
-const cal = StyleSheet.create({
+const calStyles = (colors: any) => StyleSheet.create({
   wrap: { backgroundColor: colors.card, borderRadius: 20, marginHorizontal: spacing.md, marginTop: spacing.md, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
   nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   navBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.input },
@@ -140,6 +143,8 @@ const cal = StyleSheet.create({
 
 // ─── Create Plan Modal ─────────────────────────────────────────────────────
 const CreatePlanModal = ({ visible, onClose, onSave, initialPlan }: { visible: boolean; onClose: () => void; onSave: (p: StudyPlan) => void; initialPlan?: StudyPlan | null }) => {
+  const { colors } = useMobileTheme();
+  const cm = cmStyles(colors);
   const [name, setName] = useState('');
   const [subjectsInput, setSubjectsInput] = useState('');
   const [hours, setHours] = useState('');
@@ -346,7 +351,7 @@ const CreatePlanModal = ({ visible, onClose, onSave, initialPlan }: { visible: b
   );
 };
 
-const cm = StyleSheet.create({
+const cmStyles = (colors: any) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.card },
   title: { color: colors.foreground, fontSize: 18, fontWeight: '800' },
@@ -389,6 +394,8 @@ const cm = StyleSheet.create({
 
 // ─── Plan Detail ───────────────────────────────────────────────────────────
 const PlanDetail = ({ plan, onBack, onDelete, onEdit }: { plan: StudyPlan; onBack: () => void; onDelete: () => void; onEdit: () => void }) => {
+  const { colors } = useMobileTheme();
+  const pd = pdStyles(colors);
   const [completedSessions, setCompletedSessions] = useState<Set<string>>(new Set(plan.completedSessionIds || []));
 
   const weekDays = [1,2,3,4,5];
@@ -573,7 +580,7 @@ const PlanDetail = ({ plan, onBack, onDelete, onEdit }: { plan: StudyPlan; onBac
   );
 };
 
-const pd = StyleSheet.create({
+const pdStyles = (colors: any) => StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, backgroundColor: colors.card, gap: spacing.sm },
   backBtn: { flexDirection: 'row', alignItems: 'center' },
   backArrow: { color: colors.primary, fontSize: 16, fontWeight: '700' },
@@ -613,6 +620,8 @@ const pd = StyleSheet.create({
 
 // ─── Main Planner ──────────────────────────────────────────────────────────
 export default function PlannerScreen() {
+  const { colors } = useMobileTheme();
+  const pl = plStyles(colors);
   const [plans, setPlans] = useState<StudyPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -814,7 +823,7 @@ export default function PlannerScreen() {
   );
 }
 
-const pl = StyleSheet.create({
+const plStyles = (colors: any) => StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, backgroundColor: colors.card },
   title: { color: colors.foreground, fontSize: 20, fontWeight: '800', letterSpacing: -0.5 },
   sub: { color: colors.muted, fontSize: 12, marginTop: 2 },

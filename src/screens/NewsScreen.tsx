@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, RefreshControl } from 'react-native';
-import { colors, spacing, radius, typography } from '../lib/theme';
+import { spacing, radius } from '../lib/theme';
 import { getNews } from '../services/news';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useMobileTheme } from '../contexts/ThemeContext';
 
 interface NewsItem { id: string; title: string; date: string; image: string; category: string; excerpt: string; }
 
-const SkeletonCard = () => (
+const SkeletonCard = ({ s }: { s: ReturnType<typeof styles> }) => (
   <View style={s.skeletonCard}>
     <View style={[s.skeletonImg, { opacity: 0.15 }]} />
     <View style={s.skeletonBody}>
@@ -19,6 +20,8 @@ const SkeletonCard = () => (
 );
 
 export default function NewsScreen() {
+  const { colors } = useMobileTheme();
+  const s = styles(colors);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -65,7 +68,7 @@ export default function NewsScreen() {
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={colors.primary} />}
         contentContainerStyle={{ padding: spacing.md, paddingBottom: 130, gap: 12 }}>
         {loading
-          ? [0, 1, 2, 3].map(i => <SkeletonCard key={i} />)
+          ? [0, 1, 2, 3].map(i => <SkeletonCard key={i} s={s} />)
           : filtered.map((item, i) => (
             <TouchableOpacity key={item.id} style={s.card} activeOpacity={0.85}>
               <Image source={{ uri: item.image }} style={s.cardImg} resizeMode="cover"
@@ -84,7 +87,7 @@ export default function NewsScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const styles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingTop: 8, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   title: { fontSize: 20, fontWeight: '800', color: colors.foreground, letterSpacing: -0.5 },

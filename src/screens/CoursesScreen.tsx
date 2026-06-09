@@ -3,10 +3,11 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   Alert, RefreshControl, ActivityIndicator,
 } from 'react-native';
-import { colors, spacing, radius, typography } from '../lib/theme';
+import { spacing, radius, typography } from '../lib/theme';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useMobileTheme } from '../contexts/ThemeContext';
 
 interface PDF {
   id: string;
@@ -28,6 +29,8 @@ const formatDate = (d: string) =>
 
 export default function CoursesScreen() {
   const { user } = useAuth();
+  const { colors } = useMobileTheme();
+  const s = styles(colors);
   const [pdfs, setPdfs] = useState<PDF[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -134,7 +137,7 @@ export default function CoursesScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const styles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, backgroundColor: colors.card },
   title: { fontSize: typography.lg, fontWeight: '800', color: colors.foreground, letterSpacing: -0.3 },

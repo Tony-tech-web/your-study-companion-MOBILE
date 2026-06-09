@@ -4,9 +4,10 @@ import {
   TextInput, Modal, ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, spacing, radius, typography } from '../lib/theme';
+import { spacing, radius, typography } from '../lib/theme';
 import { getGPARecords, createGPARecord, deleteGPARecord } from '../services/gpa';
 import { GPARecord } from '../types';
+import { useMobileTheme } from '../contexts/ThemeContext';
 
 const classify = (gpa: number) => {
   if (gpa >= 4.5) return 'First Class';
@@ -16,15 +17,18 @@ const classify = (gpa: number) => {
   return 'Pass';
 };
 
-const InlineError = ({ msg }: { msg: string }) => msg ? (
+const InlineError = ({ msg, ie }: { msg: string; ie: ReturnType<typeof inlineErrorStyles> }) => msg ? (
   <View style={ie.wrap}><Text style={ie.text}>{msg}</Text></View>
 ) : null;
-const ie = StyleSheet.create({
+const inlineErrorStyles = (colors: any) => StyleSheet.create({
   wrap: { backgroundColor: colors.red + '18', borderRadius: radius.sm, padding: spacing.sm, borderWidth: 1, borderColor: colors.red + '30', marginBottom: spacing.sm },
   text: { color: colors.red, fontSize: typography.xs },
 });
 
 export default function GPAScreen() {
+  const { colors } = useMobileTheme();
+  const s = styles(colors);
+  const ie = inlineErrorStyles(colors);
   const [records, setRecords] = useState<GPARecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -180,7 +184,7 @@ export default function GPAScreen() {
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={s.modalContent}>
-            <InlineError msg={formError} />
+            <InlineError msg={formError} ie={ie} />
             {[
               { label: 'Semester *', value: semester, onChange: setSemester, placeholder: 'e.g. 2024/2025 First Semester', kb: 'default' as const },
               { label: 'GPA (0–5) *', value: gpa, onChange: setGpa, placeholder: 'e.g. 4.2', kb: 'decimal-pad' as const },
@@ -208,7 +212,7 @@ export default function GPAScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const styles = (colors: any) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.card },
   title: { color: colors.foreground, fontSize: typography.lg, fontWeight: '800' },

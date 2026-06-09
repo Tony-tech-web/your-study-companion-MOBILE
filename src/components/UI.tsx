@@ -1,15 +1,20 @@
 import React from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
-import { colors, radius, spacing, shadow } from '../lib/theme';
+import { radius, spacing, shadow } from '../lib/theme';
+import { useMobileTheme } from '../contexts/ThemeContext';
 
 // Skeleton loader - shimmer effect
 export const Skeleton = ({ width, height, borderRadius = radius.md, style }: {
   width: number | string; height: number; borderRadius?: number; style?: any;
-}) => (
-  <View style={[{ width: width as any, height, borderRadius, backgroundColor: colors.surface }, style]} />
-);
+}) => {
+  const { colors } = useMobileTheme();
+  return <View style={[{ width: width as any, height, borderRadius, backgroundColor: colors.surface }, style]} />;
+};
 
-export const CardSkeleton = () => (
+export const CardSkeleton = () => {
+  const { colors } = useMobileTheme();
+  const sk = styles(colors);
+  return (
   <View style={sk.card}>
     <View style={sk.row}>
       <Skeleton width={40} height={40} borderRadius={radius.full} />
@@ -22,20 +27,27 @@ export const CardSkeleton = () => (
     <Skeleton width="80%" height={10} style={{ marginTop: 6 }} />
   </View>
 );
+};
 
-export const StatSkeleton = () => (
+export const StatSkeleton = () => {
+  const { colors } = useMobileTheme();
+  const sk = styles(colors);
+  return (
   <View style={[sk.card, sk.stat]}>
     <Skeleton width={32} height={32} borderRadius={radius.md} />
     <Skeleton width="60%" height={20} style={{ marginTop: 12 }} />
     <Skeleton width="80%" height={10} style={{ marginTop: 6 }} />
   </View>
 );
+};
 
 // iOS-style grouped list row
 export const ListRow = ({ icon, iconBg, label, value, showChevron = true, onPress, danger }: {
   icon: React.ReactNode; iconBg: string; label: string;
   value?: string; showChevron?: boolean; onPress?: () => void; danger?: boolean;
 }) => {
+  const { colors } = useMobileTheme();
+  const sk = styles(colors);
   const { TouchableOpacity } = require('react-native');
   return (
     <TouchableOpacity style={sk.listRow} onPress={onPress} activeOpacity={0.7}>
@@ -50,14 +62,21 @@ export const ListRow = ({ icon, iconBg, label, value, showChevron = true, onPres
 };
 
 // Pill badge
-export const Badge = ({ label, color = colors.primary }: { label: string; color?: string }) => (
-  <View style={[sk.badge, { backgroundColor: color + '20' }]}>
-    <Text style={[sk.badgeText, { color }]}>{label}</Text>
-  </View>
-);
+export const Badge = ({ label, color }: { label: string; color?: string }) => {
+  const { colors } = useMobileTheme();
+  const sk = styles(colors);
+  const badgeColor = color || colors.primary;
+  return (
+    <View style={[sk.badge, { backgroundColor: badgeColor + '20' }]}>
+      <Text style={[sk.badgeText, { color: badgeColor }]}>{label}</Text>
+    </View>
+  );
+};
 
 // Section header (iOS grouped style)
 export const SectionHeader = ({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) => {
+  const { colors } = useMobileTheme();
+  const sk = styles(colors);
   const { TouchableOpacity } = require('react-native');
   return (
     <View style={sk.sectionHeader}>
@@ -68,15 +87,19 @@ export const SectionHeader = ({ title, action, onAction }: { title: string; acti
 };
 
 // Empty state
-export const EmptyState = ({ icon, title, subtitle }: { icon: string; title: string; subtitle?: string }) => (
+export const EmptyState = ({ icon, title, subtitle }: { icon: string; title: string; subtitle?: string }) => {
+  const { colors } = useMobileTheme();
+  const sk = styles(colors);
+  return (
   <View style={sk.empty}>
     <Text style={sk.emptyIcon}>{icon}</Text>
     <Text style={sk.emptyTitle}>{title}</Text>
     {subtitle && <Text style={sk.emptySub}>{subtitle}</Text>}
   </View>
 );
+};
 
-const sk = StyleSheet.create({
+const styles = (colors: any) => StyleSheet.create({
   card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.md, borderWidth: 1, borderColor: colors.border, ...shadow.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   stat: { flex: 1 },

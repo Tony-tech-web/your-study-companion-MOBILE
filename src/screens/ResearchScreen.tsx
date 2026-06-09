@@ -5,16 +5,19 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
-import { colors, spacing, radius, typography } from '../lib/theme';
+import { spacing, radius, typography } from '../lib/theme';
 import { searchResearch, getResearchHistory, deleteResearchEntry, SearchResult } from '../services/research';
 import { callEdgeFunction } from '../lib/supabase';
 import { ResearchPaper } from '../types';
+import { useMobileTheme } from '../contexts/ThemeContext';
 
 interface AIInsights { insights: string; gaps: string[]; relatedTopics: string[]; }
 
 const MODES = [{ id: 'academic', label: 'Academic' }, { id: 'projects', label: 'Projects' }];
 
 export default function ResearchScreen() {
+  const { colors } = useMobileTheme();
+  const s = styles(colors);
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<'academic' | 'projects'>('academic');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -196,7 +199,7 @@ Focus on what this source covers, its relevance, and how a student could use it.
   );
 }
 
-const s = StyleSheet.create({
+const styles = (colors: any) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: { padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.card },
   title: { color: colors.foreground, fontSize: typography.lg, fontWeight: '800' },

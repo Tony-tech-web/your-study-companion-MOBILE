@@ -5,10 +5,11 @@ import {
   Alert, Modal, ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing, radius, typography, fontFamily } from '../lib/theme';
+import { spacing, fontFamily } from '../lib/theme';
 import { callEdgeFunction, supabase } from '../lib/supabase';
 import { getAIConversations, saveAIConversation, clearAIConversations, AIConversationEntry } from '../services/ai';
 import { useAuth } from '../contexts/AuthContext';
+import { useMobileTheme } from '../contexts/ThemeContext';
 import api from '../services/api';
 import { getBillingUsage, recordAiUsageEvent } from '../services/billing';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -89,7 +90,7 @@ const ModeIcon = ({ mode, color, size = 18 }: { mode: ChatMode; color: string; s
 };
 
 // ─── PDF Library Bottom Sheet ──────────────────────────────────────────────
-const renderMessageContent = (content: string, isUser: boolean) => {
+const renderMessageContent = (content: string, isUser: boolean, s: ReturnType<typeof styles>) => {
   if (isUser) {
     return <Text style={[s.bubbleText, { color: '#fff' }]}>{content}</Text>;
   }
@@ -147,6 +148,8 @@ const PdfLibrarySheet = ({
   onDownload: (pdf: StudentPdf) => void;
   onStart: (selectedIds: string[]) => void;
 }) => {
+  const { colors } = useMobileTheme();
+  const sh = sheetStyles(colors);
   const [selected, setSelected] = useState<string[]>([]);
   const accentColor = mode === 'teach' ? '#6366f1' : '#10b981';
 
@@ -269,7 +272,7 @@ const PdfLibrarySheet = ({
   );
 };
 
-const sh = StyleSheet.create({
+const sheetStyles = (colors: any) => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingBottom: 40, maxHeight: '80%' },
   handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginTop: 10, marginBottom: 8 },
@@ -302,6 +305,8 @@ const sh = StyleSheet.create({
 
 // ─── Session End Confirm ───────────────────────────────────────────────────
 const EndSessionModal = ({ visible, mode, onEnd, onContinue }: { visible: boolean; mode: ChatMode; onEnd: () => void; onContinue: () => void }) => {
+  const { colors } = useMobileTheme();
+  const em = endModalStyles(colors);
   const accentColor = mode === 'teach' ? '#6366f1' : '#10b981';
   return (
     <Modal visible={visible} transparent animationType="fade">
@@ -324,7 +329,7 @@ const EndSessionModal = ({ visible, mode, onEnd, onContinue }: { visible: boolea
   );
 };
 
-const em = StyleSheet.create({
+const endModalStyles = (colors: any) => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: 24 },
   card: { backgroundColor: colors.card, borderRadius: 28, padding: 24, width: '100%', maxWidth: 320, alignItems: 'center', gap: 8, borderWidth: 1, borderColor: colors.border },
   icon: { width: 64, height: 64, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
@@ -339,6 +344,8 @@ const em = StyleSheet.create({
 // ─── Main Screen ────────────────────────────────────────────────────────────
 export default function AIScreen() {
   const { user } = useAuth();
+  const { colors } = useMobileTheme();
+  const s = styles(colors);
   const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<AIConversationEntry[]>([]);
   const [input, setInput] = useState('');
@@ -588,7 +595,7 @@ export default function AIScreen() {
                   <Text style={[s.avatarText, !isUser && { color: colors.primary }]}>{isUser ? 'U' : 'O'}</Text>
                 </View>
                 <View style={[s.bubble, isUser ? s.bubbleUser : s.bubbleAI]}>
-                  {renderMessageContent(msg.content, isUser)}
+                  {renderMessageContent(msg.content, isUser, s)}
                 </View>
               </View>
             );
@@ -599,7 +606,7 @@ export default function AIScreen() {
                 <View style={s.msgRow}>
                   <View style={[s.avatar, s.avatarAI]}><Text style={[s.avatarText, { color: colors.primary }]}>O</Text></View>
                   <View style={[s.bubble, s.bubbleAI, { borderColor: colors.primary + '40' }]}>
-                    {renderMessageContent(streaming, false)}
+                    {renderMessageContent(streaming, false, s)}
                     <Text style={{ color: colors.primary }}>|</Text>
                   </View>
                 </View>
@@ -663,7 +670,7 @@ export default function AIScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const styles = (colors: any) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, backgroundColor: colors.card },
   title: { color: colors.foreground, fontSize: 17, fontWeight: '800', fontFamily: fontFamily.display },
@@ -692,7 +699,7 @@ const s = StyleSheet.create({
   sessionText: { flex: 1, fontSize: 11, fontWeight: '600', fontFamily: fontFamily.sans },
   endBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
   endBtnText: { fontSize: 11, fontWeight: '700', fontFamily: fontFamily.sans },
-  inputWrap: { width: '100%', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, backgroundColor: 'rgba(20,20,20,0.86)' },
+  inputWrap: { width: '100%', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, backgroundColor: colors.card },
   modeBar: { flexDirection: 'row', gap: 8, paddingHorizontal: spacing.md, paddingTop: 10, paddingBottom: 8 },
   modeBtn: { flex: 1, minHeight: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border },
   modeBtnText: { color: colors.muted, fontSize: 12, fontWeight: '700', fontFamily: fontFamily.sans },

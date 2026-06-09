@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Image, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
-import { colors, spacing, radius, typography } from '../lib/theme';
+import { spacing, radius, typography } from '../lib/theme';
 import { getLeaderboard, LeaderboardResult } from '../services/leaderboard';
 import { useAuth } from '../contexts/AuthContext';
+import { useMobileTheme } from '../contexts/ThemeContext';
 
 
 
 export default function LeaderboardScreen() {
   const { user } = useAuth();
+  const { colors } = useMobileTheme();
+  const s = styles(colors);
   const [result, setResult] = useState<LeaderboardResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -164,7 +167,7 @@ export default function LeaderboardScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const styles = (colors: any) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: 130 },
   center: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
