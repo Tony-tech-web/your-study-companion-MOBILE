@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { colors, fontFamily, radius, shadow, spacing } from '../../src/lib/theme';
+import { fontFamily, radius, shadow, spacing } from '../../src/lib/theme';
+import { useMobileTheme } from '../../src/contexts/ThemeContext';
 import Svg, { Path } from 'react-native-svg';
 
 type RouteName = 'index' | 'ai' | 'planner' | 'gpa' | 'research' | 'chat' | 'news' | 'courses' | 'leaderboard' | 'settings' | 'billing';
@@ -56,6 +57,8 @@ const Icon = ({ name, color, size = 20, strokeWidth = 1.9 }: { name: RouteName |
 
 function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { colors, theme } = useMobileTheme();
+  const s = styles(colors, theme);
   const [open, setOpen] = useState(false);
   const scale = useRef(new Animated.Value(0.92)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -201,10 +204,10 @@ export default function TabsLayout() {
   );
 }
 
-const s = StyleSheet.create({
+const styles = (colors: any, theme: string) => StyleSheet.create({
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.42)',
+    backgroundColor: theme === 'light' ? 'rgba(9,9,11,0.24)' : 'rgba(0,0,0,0.42)',
   },
   morePanel: {
     position: 'absolute',
@@ -214,7 +217,7 @@ const s = StyleSheet.create({
     maxWidth: 430,
     borderRadius: radius.xxl,
     padding: spacing.md,
-    backgroundColor: 'rgba(18,18,18,0.88)',
+    backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(18,18,18,0.88)',
     borderWidth: 1,
     borderColor: colors.border,
     ...shadow.floating,
@@ -250,7 +253,7 @@ const s = StyleSheet.create({
   },
   moreItemActive: {
     borderColor: colors.primary,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: theme === 'light' ? 'rgba(9,9,11,0.08)' : 'rgba(255,255,255,0.12)',
   },
   moreIcon: {
     width: 40,
@@ -297,7 +300,7 @@ const s = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 6,
-    backgroundColor: 'rgba(20,20,20,0.78)',
+    backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.78)' : 'rgba(20,20,20,0.78)',
     borderWidth: 1,
     borderColor: colors.border,
     ...shadow.floating,
@@ -332,7 +335,7 @@ const s = StyleSheet.create({
     borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: theme === 'light' ? 'rgba(9,9,11,0.08)' : 'rgba(255,255,255,0.12)',
     borderWidth: 1,
     borderColor: colors.border,
     shadowColor: '#000',
