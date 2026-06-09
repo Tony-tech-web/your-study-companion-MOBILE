@@ -14,7 +14,7 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { colors, fontFamily, radius, shadow, spacing } from '../../src/lib/theme';
 import Svg, { Path } from 'react-native-svg';
 
-type RouteName = 'index' | 'ai' | 'planner' | 'gpa' | 'research' | 'chat' | 'news' | 'courses' | 'leaderboard';
+type RouteName = 'index' | 'ai' | 'planner' | 'gpa' | 'research' | 'chat' | 'news' | 'courses' | 'leaderboard' | 'settings' | 'billing';
 
 const icons: Record<RouteName | 'plus', string> = {
   index: 'M3 10.5L12 3l9 7.5V21a1 1 0 01-1 1h-5.4v-6.5H9.4V22H4a1 1 0 01-1-1V10.5z',
@@ -26,6 +26,8 @@ const icons: Record<RouteName | 'plus', string> = {
   news: 'M5 4h10l5 5v15H5zM14 4v6h6M8 14h8M8 18h8',
   courses: 'M4 6.5A3.5 3.5 0 017.5 3H20v16H7.5A3.5 3.5 0 004 22.5V6.5zM4 6.5v16',
   leaderboard: 'M8 21h8M12 17v4M6 4h12v4a6 6 0 01-12 0V4zM6 6H3v2a4 4 0 004 4M18 6h3v2a4 4 0 01-4 4',
+  settings: 'M12 8.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7zM19.4 15a1.8 1.8 0 00.36 1.98l.03.03-1.7 2.94-.05-.02a1.8 1.8 0 00-2.03.31 1.8 1.8 0 00-.48 1.98l.02.06h-3.4l.02-.06a1.8 1.8 0 00-.48-1.98 1.8 1.8 0 00-2.03-.31l-.05.02-1.7-2.94.03-.03A1.8 1.8 0 008.6 15a1.8 1.8 0 00-1.55-1.04H7v-3.4h.05A1.8 1.8 0 008.6 9.52a1.8 1.8 0 00-.36-1.98l-.03-.03 1.7-2.94.05.02a1.8 1.8 0 002.03-.31A1.8 1.8 0 0012.47 2.3l-.02-.06h3.4l-.02.06a1.8 1.8 0 00.48 1.98 1.8 1.8 0 002.03.31l.05-.02 1.7 2.94-.03.03a1.8 1.8 0 00-.36 1.98 1.8 1.8 0 001.55 1.04h.05v3.4h-.05A1.8 1.8 0 0019.4 15z',
+  billing: 'M4 7a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7zM4 10h16M8 15h4',
   plus: 'M12 5v14M5 12h14',
 };
 
@@ -33,7 +35,7 @@ const primaryRoutes: Array<{ name: RouteName; label: string }> = [
   { name: 'index', label: 'Dashboard' },
   { name: 'ai', label: 'AI Assistant' },
   { name: 'news', label: 'News' },
-  { name: 'leaderboard', label: 'Leaderboard' },
+  { name: 'settings', label: 'Settings' },
 ];
 
 const moreRoutes: Array<{ name: RouteName; label: string; detail: string }> = [
@@ -42,6 +44,8 @@ const moreRoutes: Array<{ name: RouteName; label: string; detail: string }> = [
   { name: 'research', label: 'Research', detail: 'AI search' },
   { name: 'courses', label: 'Courses', detail: 'PDF library' },
   { name: 'chat', label: 'Chat', detail: 'Campus messages' },
+  { name: 'leaderboard', label: 'Leaderboard', detail: 'XP rankings' },
+  { name: 'billing', label: 'Billing', detail: 'Plans and payments' },
 ];
 
 const Icon = ({ name, color, size = 20, strokeWidth = 1.9 }: { name: RouteName | 'plus'; color: string; size?: number; strokeWidth?: number }) => (
@@ -191,6 +195,8 @@ export default function TabsLayout() {
       <Tabs.Screen name="news" />
       <Tabs.Screen name="courses" />
       <Tabs.Screen name="leaderboard" />
+      <Tabs.Screen name="settings" />
+      <Tabs.Screen name="billing" />
     </Tabs>
   );
 }

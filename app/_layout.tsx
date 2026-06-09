@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
+import { MobileThemeProvider } from '../src/contexts/ThemeContext';
 import { useRouter, useSegments } from 'expo-router';
 import { Animated, Easing, Linking, StyleSheet } from 'react-native';
 import { handleDeepLink } from '../src/lib/supabase';
@@ -159,10 +160,12 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <StatusBar style="light" />
-        <RootLayoutNav />
-      </AuthProvider>
+      <MobileThemeProvider>
+        <AuthProvider>
+          <StatusBar style="light" />
+          <RootLayoutNav />
+        </AuthProvider>
+      </MobileThemeProvider>
     </SafeAreaProvider>
   );
 }
