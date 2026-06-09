@@ -7,6 +7,7 @@ import { colors, spacing, radius, typography } from '../lib/theme';
 import { getChatMessages, sendChatMessage, ChatMessage } from '../services/chat';
 import { useAuth } from '../contexts/AuthContext';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { supabase } from '../lib/supabase';
 
 export default function ChatScreen() {
   const { user } = useAuth();
@@ -24,6 +25,34 @@ export default function ChatScreen() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!user?.id) return;
+    const isVisibleToUser = (message: ChatMessage) =>
+      !message.receiver_id || message.sender_id === user.id || message.receiver_id === user.id;
+
+    const channel = supabase
+      .channel('orbit-mobile-chat-messages')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, payload => {
+        const next = payload.new as ChatMessage | null;
+        const old = payload.old as Partial<ChatMessage> | null;
+        if (payload.eventType === 'DELETE' && old?.id) {
+          setMessages(prev => prev.filter(item => item.id !== old.id));
+          return;
+        }
+        if (!next || !isVisibleToUser(next)) return;
+        setMessages(prev => {
+          const exists = prev.some(item => item.id === next.id);
+          const merged = exists ? prev.map(item => item.id === next.id ? next : item) : [...prev, next];
+          return merged.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   const handleSend = async () => {
     if (!input.trim() || sending) return;
     const content = input.trim();
@@ -31,7 +60,7 @@ export default function ChatScreen() {
     setSending(true);
     try {
       const msg = await sendChatMessage(content);
-      setMessages(prev => [...prev, msg]);
+      setMessages(prev => prev.some(item => item.id === msg.id) ? prev : [...prev, msg]);
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (e) { console.error(e); }
     finally { setSending(false); }
@@ -57,7 +86,7 @@ export default function ChatScreen() {
         <View style={s.headerDot} />
         <View>
           <Text style={s.headerTitle}>Global Study Hub</Text>
-          <Text style={s.headerSub}>Campus channel · Realtime coming soon</Text>
+          <Text style={s.headerSub}>Campus channel · realtime active</Text>
         </View>
       </View>
 

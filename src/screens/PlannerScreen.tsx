@@ -6,9 +6,9 @@ import {
 } from 'react-native';
 import { colors, spacing, radius, typography } from '../lib/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getStudyPlans, createStudyPlan, deleteStudyPlan } from '../services/planner';
+import { getStudyPlans, createStudyPlan, updateStudyPlan, deleteStudyPlan, randomizeStudyPlan } from '../services/planner';
 import { callEdgeFunction } from '../lib/supabase';
-import { StudyPlan } from '../types';
+import { StudyPlan, StudyPlanBlock } from '../types';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const PLAN_COLORS = ['#6366f1','#10b981','#f27d26','#8b5cf6','#f59e0b','#ef4444'];
@@ -105,8 +105,9 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
   const [error, setError] = useState('');
   const [step, setStep] = useState<'form' | 'generating' | 'done'>('form');
   const [saving, setSaving] = useState(false);
+  const [scheduleBlocks, setScheduleBlocks] = useState<StudyPlanBlock[]>([]);
 
-  const reset = () => { setName(''); setSubjectsInput(''); setHours(''); setError(''); setStep('form'); setSaving(false); };
+  const reset = () => { setName(''); setSubjectsInput(''); setHours(''); setError(''); setStep('form'); setSaving(false); setScheduleBlocks([]); };
 
   const handleGenerate = async () => {
     if (!name || !hours || !subjectsInput) { setError('Please fill all fields'); return; }
@@ -118,7 +119,20 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
       });
       // Schedule generated — now save the plan
       setStep('done');
-    } catch { setStep('done'); }
+    } catch {
+      try {
+        const subjects = subjectsInput.split(',').map(s => s.trim()).filter(Boolean);
+        const randomized = await randomizeStudyPlan({
+          subjects,
+          totalHours: parseInt(hours) || subjects.length,
+          daysPerWeek: parseInt(daysPerWeek) || 5,
+        });
+        setScheduleBlocks(randomized.blocks);
+      } catch {
+        setScheduleBlocks([]);
+      }
+      setStep('done');
+    }
   };
 
   const handleSave = async () => {
@@ -128,6 +142,8 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
         name,
         subjects: subjectsInput.split(',').map(s => s.trim()).filter(Boolean),
         totalHours: parseInt(hours) || 0,
+        scheduleBlocks,
+        completedSessionIds: [],
       });
       onSave(plan);
       onClose();
@@ -164,7 +180,7 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
                 </View>
               ))}
               <TouchableOpacity style={cm.generateBtn} onPress={handleGenerate}>
-                <Text style={cm.generateBtnText}>✦  Generate with AI</Text>
+                <Text style={cm.generateBtnText}>Generate with AI</Text>
               </TouchableOpacity>
             </>
           )}
@@ -181,7 +197,7 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
             <View style={cm.doneWrap}>
               <View style={cm.doneIcon}><Text style={cm.doneIconText}>✓</Text></View>
               <Text style={cm.doneTitle}>Schedule ready</Text>
-              <Text style={cm.doneSub}>Your plan "{name}" is ready to be saved.</Text>
+              <Text style={cm.doneSub}>Your plan "{name}" is ready with {scheduleBlocks.length} scheduled session{scheduleBlocks.length === 1 ? '' : 's'}.</Text>
               {error ? <View style={cm.errorBox}><Text style={cm.errorText}>{error}</Text></View> : null}
               <TouchableOpacity style={[cm.saveBtn, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
                 {saving ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={cm.saveBtnText}>Save Plan</Text>}
@@ -221,22 +237,30 @@ const cm = StyleSheet.create({
 
 // ─── Plan Detail ───────────────────────────────────────────────────────────
 const PlanDetail = ({ plan, onBack, onDelete }: { plan: StudyPlan; onBack: () => void; onDelete: () => void }) => {
-  const [completedSessions, setCompletedSessions] = useState<Set<string>>(new Set());
+  const [completedSessions, setCompletedSessions] = useState<Set<string>>(new Set(plan.completedSessionIds || []));
 
   const weekDays = [1,2,3,4,5];
   const sessionTimes = ['09:00','11:00','14:00','16:00'];
   const dayColors = PLAN_COLORS;
 
-  // Simple schedule distribution
-  const sessions = plan.subjects.flatMap((sub, si) =>
-    weekDays.slice(0, Math.max(2, Math.ceil(weekDays.length / plan.subjects.length))).map((day, di) => ({
-      id: `${sub}-${day}`,
-      subject: sub,
+  const fallbackBlocks: StudyPlanBlock[] = plan.subjects.flatMap((sub, si) =>
+    weekDays.slice(0, Math.max(1, Math.ceil(weekDays.length / Math.max(plan.subjects.length, 1)))).map((day, di) => ({
       day: weekDays[(si + di) % weekDays.length],
-      time: sessionTimes[di % sessionTimes.length],
+      hour: parseInt(sessionTimes[di % sessionTimes.length], 10),
+      subject: sub,
+      duration: 1,
       color: dayColors[si % dayColors.length],
     }))
   );
+  const scheduleBlocks = plan.scheduleBlocks?.length ? plan.scheduleBlocks : fallbackBlocks;
+  const sessionId = (block: StudyPlanBlock) => `${plan.id}-${block.day}-${block.hour}-${block.subject}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-');
+  const sessions = scheduleBlocks.map(block => ({
+    id: sessionId(block),
+    subject: block.subject,
+    day: block.day,
+    time: `${String(block.hour).padStart(2, '0')}:00`,
+    color: block.color,
+  }));
 
   const confirmSession = (sessionId: string, subject: string, time: string) => {
     const done = completedSessions.has(sessionId);
@@ -249,6 +273,11 @@ const PlanDetail = ({ plan, onBack, onDelete }: { plan: StudyPlan; onBack: () =>
           setCompletedSessions(prev => {
             const next = new Set(prev);
             done ? next.delete(sessionId) : next.add(sessionId);
+            updateStudyPlan(plan.id, {
+              ...plan,
+              scheduleBlocks,
+              completedSessionIds: Array.from(next),
+            }).catch(console.error);
             return next;
           });
         }},
@@ -417,20 +446,25 @@ export default function PlannerScreen() {
 
   useEffect(() => { load(); }, []);
 
-  // Dates that have plans (simple: mark today + next 5 days if plans exist)
   const planDates = useMemo(() => {
     const s = new Set<string>();
-    if (plans.length > 0) {
-      for (let i = 0; i < 30; i += Math.max(1, Math.floor(7 / plans.length))) {
-        const d = new Date(today);
-        d.setDate(today.getDate() + i);
-        if (d.getDay() !== 0 && d.getDay() !== 6) {
-          s.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
-        }
+    for (let day = 1; day <= getDaysInMonth(calYear, calMonth); day += 1) {
+      const date = new Date(calYear, calMonth, day);
+      const hasSession = plans.some(plan => (plan.scheduleBlocks || []).some(block => block.day === date.getDay()));
+      if (hasSession) {
+        s.add(`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`);
       }
     }
     return s;
-  }, [plans]);
+  }, [plans, calYear, calMonth]);
+
+  const selectedSessions = useMemo(() => plans.flatMap((plan, planIndex) =>
+    (plan.scheduleBlocks || []).filter(block => block.day === selectedDate.getDay()).map(block => ({
+      plan,
+      block,
+      color: block.color || PLAN_COLORS[planIndex % PLAN_COLORS.length],
+    }))
+  ), [plans, selectedDate]);
 
   const handleDelete = (id: string) => {
     Alert.alert('Delete Plan', 'Remove this study plan permanently?', [
@@ -507,12 +541,41 @@ export default function PlannerScreen() {
           {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
         </Text>
 
+        {selectedSessions.length === 0 ? (
+          <View style={pl.dayActionCard}>
+            <Text style={pl.dayActionTitle}>Nothing scheduled on this day</Text>
+            <Text style={pl.dayActionSub}>Create a plan or modify an existing one to place study sessions here.</Text>
+            <TouchableOpacity style={pl.dayActionBtn} onPress={() => setShowCreate(true)}>
+              <Text style={pl.dayActionBtnText}>Add Plan</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={pl.dayActionCard}>
+            <Text style={pl.dayActionTitle}>Scheduled sessions</Text>
+            {selectedSessions.map(({ plan, block, color }) => (
+              <View key={`${plan.id}-${block.day}-${block.hour}-${block.subject}`} style={pl.daySession}>
+                <View style={[pl.daySessionBar, { backgroundColor: color }]} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={pl.daySessionTitle} numberOfLines={1}>{block.subject}</Text>
+                  <Text style={pl.daySessionMeta}>{plan.name} · {String(block.hour).padStart(2, '0')}:00 · {block.duration}h</Text>
+                </View>
+                <TouchableOpacity style={pl.daySessionBtn} onPress={() => setSelectedPlan(plan)}>
+                  <Text style={pl.daySessionBtnText}>Modify</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[pl.daySessionBtn, pl.daySessionDelete]} onPress={() => handleDelete(plan.id)}>
+                  <Text style={[pl.daySessionBtnText, { color: colors.red }]}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+
         {plans.length === 0 ? (
           <View style={pl.empty}>
             <Text style={pl.emptyTitle}>No study plans yet</Text>
             <Text style={pl.emptySub}>Create one with AI to get your schedule</Text>
             <TouchableOpacity style={pl.emptyBtn} onPress={() => setShowCreate(true)}>
-              <Text style={pl.emptyBtnText}>✦  Create with AI</Text>
+              <Text style={pl.emptyBtnText}>Create with AI</Text>
             </TouchableOpacity>
           </View>
         ) : plans.map((plan, i) => (
@@ -559,6 +622,18 @@ const pl = StyleSheet.create({
   statValue: { color: colors.primary, fontSize: 22, fontWeight: '900' },
   statLabel: { color: colors.muted, fontSize: 10, marginTop: 2, fontWeight: '600' },
   sectionLabel: { color: colors.foreground, fontSize: 15, fontWeight: '800', paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: 8, letterSpacing: -0.2 },
+  dayActionCard: { marginHorizontal: spacing.md, marginBottom: spacing.md, backgroundColor: colors.card, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: 10 },
+  dayActionTitle: { color: colors.foreground, fontSize: 15, fontWeight: '800' },
+  dayActionSub: { color: colors.muted, fontSize: 12, lineHeight: 18 },
+  dayActionBtn: { alignSelf: 'flex-start', backgroundColor: colors.primary, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 8 },
+  dayActionBtnText: { color: colors.onPrimary, fontSize: 12, fontWeight: '800' },
+  daySession: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, padding: 10 },
+  daySessionBar: { width: 4, height: 42, borderRadius: 4 },
+  daySessionTitle: { color: colors.foreground, fontSize: 13, fontWeight: '800' },
+  daySessionMeta: { color: colors.muted, fontSize: 11, marginTop: 2 },
+  daySessionBtn: { borderRadius: 10, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 8, paddingVertical: 6 },
+  daySessionDelete: { borderColor: colors.red + '35' },
+  daySessionBtnText: { color: colors.foreground, fontSize: 10, fontWeight: '800' },
   empty: { alignItems: 'center', paddingVertical: 48, gap: 10 },
   emptyTitle: { color: colors.foreground, fontSize: 17, fontWeight: '700' },
   emptySub: { color: colors.muted, fontSize: 13 },
