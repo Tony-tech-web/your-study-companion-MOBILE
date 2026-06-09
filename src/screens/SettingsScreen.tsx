@@ -7,6 +7,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useMobileTheme } from '../contexts/ThemeContext';
 import { supabase } from '../lib/supabase';
 import { getBillingUsage } from '../services/billing';
+import { deactivateAccount, deleteAccount } from '../services/account';
+import { ensureNotificationPermission } from '../services/notifications';
 
 const themeLabels: Array<{ value: AppTheme; label: string; detail: string }> = [
   { value: 'dark', label: 'Dark', detail: 'Premium black glass' },
@@ -19,6 +21,7 @@ export default function SettingsScreen() {
   const { theme, colors, setTheme } = useMobileTheme();
   const [notifications, setNotifications] = useState(true);
   const [usage, setUsage] = useState<any>(null);
+  const [securityBusy, setSecurityBusy] = useState(false);
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Student';
   const s = styles(colors);
 
@@ -37,6 +40,54 @@ export default function SettingsScreen() {
     if (!user?.email) return;
     const { error } = await supabase.auth.resetPasswordForEmail(user.email);
     Alert.alert('Password reset', error?.message || 'A password reset email has been sent.');
+  };
+
+  const toggleNotifications = async (value: boolean) => {
+    if (!value) {
+      setNotifications(false);
+      return;
+    }
+    const allowed = await ensureNotificationPermission();
+    setNotifications(allowed);
+    if (!allowed) Alert.alert('Notifications blocked', 'Enable notifications in device settings to receive study reminders.');
+  };
+
+  const handleDeactivate = () => {
+    Alert.alert('Deactivate account', 'Pause this Orbit profile? You can sign back in later to reactivate.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Deactivate',
+        style: 'destructive',
+        onPress: async () => {
+          setSecurityBusy(true);
+          try {
+            await deactivateAccount();
+            await signOut();
+          } finally {
+            setSecurityBusy(false);
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleDelete = () => {
+    Alert.alert('Delete account', 'Permanently delete your Orbit account and app data? This cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          setSecurityBusy(true);
+          try {
+            await deleteAccount();
+            await signOut();
+          } finally {
+            setSecurityBusy(false);
+          }
+        },
+      },
+    ]);
   };
 
   return (
@@ -95,9 +146,16 @@ export default function SettingsScreen() {
             </View>
             <Text style={s.rowValue}>{usage?.total_ai_interactions ?? 0} uses</Text>
           </View>
-          {!usage?.token_metering_enabled && (
-            <Text style={s.note}>Token remaining values will appear after provider-level usage metering is enabled.</Text>
-          )}
+          <View style={s.usageGrid}>
+            <View style={s.usagePill}>
+              <Text style={s.usageLabel}>Used</Text>
+              <Text style={s.usageValue}>{usage?.tokens_used?.toLocaleString?.() ?? 0}</Text>
+            </View>
+            <View style={s.usagePill}>
+              <Text style={s.usageLabel}>Remaining</Text>
+              <Text style={s.usageValue}>{usage?.tokens_remaining === null ? 'Plan' : usage?.tokens_remaining?.toLocaleString?.() ?? 0}</Text>
+            </View>
+          </View>
         </Section>
 
         <Section title="Notifications" colors={colors}>
@@ -108,7 +166,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={notifications}
-              onValueChange={setNotifications}
+              onValueChange={toggleNotifications}
               trackColor={{ false: colors.border, true: colors.green + '70' }}
               thumbColor={notifications ? colors.green : colors.muted}
             />
@@ -135,13 +193,20 @@ export default function SettingsScreen() {
             </View>
             <Text style={s.rowValue}>Send</Text>
           </TouchableOpacity>
-          <View style={[s.actionRow, s.dangerRow]}>
+          <TouchableOpacity activeOpacity={0.82} disabled={securityBusy} style={[s.actionRow, s.warningRow]} onPress={handleDeactivate}>
             <View>
-              <Text style={[s.rowLabel, { color: colors.red }]}>Delete or deactivate account</Text>
-              <Text style={s.rowSub}>Admin review required before account removal</Text>
+              <Text style={[s.rowLabel, { color: colors.yellow }]}>Deactivate account</Text>
+              <Text style={s.rowSub}>Pause this profile and end the current session</Text>
             </View>
-            <Text style={s.rowValue}>Locked</Text>
-          </View>
+            <Text style={s.rowValue}>Pause</Text>
+          </TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.82} disabled={securityBusy} style={[s.actionRow, s.dangerRow]} onPress={handleDelete}>
+            <View>
+              <Text style={[s.rowLabel, { color: colors.red }]}>Delete account</Text>
+              <Text style={s.rowSub}>Remove app data and Supabase auth account</Text>
+            </View>
+            <Text style={s.rowValue}>Delete</Text>
+          </TouchableOpacity>
         </Section>
 
         <Section title="Authentication" colors={colors}>
@@ -191,10 +256,15 @@ const styles = (colors: any) => StyleSheet.create({
   radioActive: { backgroundColor: colors.primary },
   actionRow: { minHeight: 68, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.xl, padding: spacing.md },
   dangerRow: { borderColor: colors.red + '35', backgroundColor: colors.red + '10' },
+  warningRow: { borderColor: colors.yellow + '35', backgroundColor: colors.yellow + '10' },
   rowLabel: { color: colors.foreground, fontSize: typography.sm, fontWeight: '900' },
   rowSub: { color: colors.muted, fontSize: typography.xs, marginTop: 4, maxWidth: 230 },
   rowValue: { color: colors.foreground, fontSize: typography.xs, fontWeight: '900' },
   note: { color: colors.muted, fontSize: typography.xs, lineHeight: 18, paddingHorizontal: 2 },
+  usageGrid: { flexDirection: 'row', gap: 10 },
+  usagePill: { flex: 1, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, padding: spacing.md },
+  usageLabel: { color: colors.muted, fontSize: typography.xs, fontWeight: '900', textTransform: 'uppercase' },
+  usageValue: { color: colors.foreground, fontSize: typography.lg, fontWeight: '900', marginTop: 4 },
   signOutBtn: { height: 52, alignItems: 'center', justifyContent: 'center', borderRadius: radius.full, borderWidth: 1, borderColor: colors.red + '45', backgroundColor: colors.red + '12' },
   signOutText: { color: colors.red, fontSize: typography.sm, fontWeight: '900' },
 });

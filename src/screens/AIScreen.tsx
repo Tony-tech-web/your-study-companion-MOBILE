@@ -10,6 +10,7 @@ import { callEdgeFunction, supabase } from '../lib/supabase';
 import { getAIConversations, saveAIConversation, clearAIConversations, AIConversationEntry } from '../services/ai';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
+import { getBillingUsage, recordAiUsageEvent } from '../services/billing';
 import * as FileSystem from 'expo-file-system/legacy';
 import Svg, { Path } from 'react-native-svg';
 
@@ -42,6 +43,9 @@ const friendlyAIError = (err: any) => {
   const lower = raw.toLowerCase();
   if (lower.includes('insufficient_quota') || lower.includes('429') || lower.includes('quota')) {
     return 'Orbit could not generate a response because the active AI provider is out of quota. Check the provider key or billing in Supabase, then try again.';
+  }
+  if (lower.includes('allowance exhausted')) {
+    return 'Your Orbit AI token allowance has been used for this billing period. Upgrade or renew your plan to continue.';
   }
   if (lower.includes('all ai providers failed') || lower.includes('provider')) {
     return 'Orbit could not reach an available AI provider right now. Check API Status and the Supabase provider secrets.';
@@ -405,14 +409,19 @@ export default function AIScreen() {
     if (!text.trim() || loading) return;
     setLoading(true); setStreaming('');
     try {
+      const usage = await getBillingUsage().catch(() => null);
+      if (usage?.ai_token_limit > 0 && usage?.tokens_remaining <= 0) {
+        throw new Error('AI token allowance exhausted');
+      }
       const userMsg = await saveAIConversation('user', text);
       setMessages(prev => [...prev, userMsg]);
       setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 50);
 
       const history = messages.slice(-6).map(m => ({ role: m.role, content: m.content }));
 
+      const promptMessages = [{ role: 'system', content: AI_RESPONSE_STYLE }, ...history, { role: 'user', content: text }];
       const res = await callEdgeFunction('ai-chat', {
-        messages: [{ role: 'system', content: AI_RESPONSE_STYLE }, ...history, { role: 'user', content: text }],
+        messages: promptMessages,
         providerId: 'auto',
         mode: overrideMode ?? mode,
         ...(pdfDocs && pdfDocs.length > 0 ? { pdfDocuments: pdfDocs } : {}),
@@ -447,6 +456,12 @@ export default function AIScreen() {
       setStreaming('');
       const aiMsg = await saveAIConversation('assistant', final);
       setMessages(prev => [...prev, aiMsg]);
+      await recordAiUsageEvent({
+        provider: 'edge:auto',
+        feature: overrideMode ? `ai_${overrideMode}` : `ai_${mode}`,
+        prompt: { promptMessages, pdfDocumentCount: pdfDocs?.length || 0 },
+        completion: final,
+      }).catch(() => {});
       setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (e: any) {
       setStreaming('');

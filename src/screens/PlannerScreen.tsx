@@ -9,6 +9,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getStudyPlans, createStudyPlan, updateStudyPlan, deleteStudyPlan, randomizeStudyPlan } from '../services/planner';
 import { callEdgeFunction } from '../lib/supabase';
 import { StudyPlan, StudyPlanBlock } from '../types';
+import { getBillingUsage, recordAiUsageEvent } from '../services/billing';
+import { scheduleStudyReminder } from '../services/notifications';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const PLAN_COLORS = ['#6366f1','#10b981','#f27d26','#8b5cf6','#f59e0b','#ef4444'];
@@ -113,11 +115,29 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
     if (!name || !hours || !subjectsInput) { setError('Please fill all fields'); return; }
     setError(''); setStep('generating');
     try {
-      await callEdgeFunction('ai-chat', {
-        messages: [{ role: 'user', content: `Generate a weekly study schedule for "${name}". Subjects: ${subjectsInput}. Hours/week: ${hours}. Days/week: ${daysPerWeek}. Return JSON only.` }],
+      const usage = await getBillingUsage().catch(() => null);
+      if (usage?.ai_token_limit > 0 && usage?.tokens_remaining <= 0) {
+        throw new Error('AI token allowance exhausted');
+      }
+      const messages = [{
+        role: 'user',
+        content: `Generate a weekly study schedule for "${name}". Subjects: ${subjectsInput}. Hours/week: ${hours}. Days/week: ${daysPerWeek}. Return JSON only with blocks: [{day,hour,subject,duration,color}]. day is 0=Sun. Use these colors: ${PLAN_COLORS.join(',')}. No markdown.`,
+      }];
+      const res = await callEdgeFunction('ai-chat', {
+        messages,
         providerId: 'auto', mode: 'chat',
       });
-      // Schedule generated — now save the plan
+      if (!res.ok) throw new Error('AI failed');
+      const data = await res.json();
+      const text = data.text || data.reply || data.message || '';
+      const parsed = JSON.parse(String(text).replace(/```json|```/g, '').trim());
+      setScheduleBlocks(Array.isArray(parsed.blocks) ? parsed.blocks : []);
+      await recordAiUsageEvent({
+        provider: 'edge:auto',
+        feature: 'planner_generate',
+        prompt: messages,
+        completion: text,
+      }).catch(() => {});
       setStep('done');
     } catch {
       try {
@@ -258,6 +278,7 @@ const PlanDetail = ({ plan, onBack, onDelete }: { plan: StudyPlan; onBack: () =>
     id: sessionId(block),
     subject: block.subject,
     day: block.day,
+    hour: block.hour,
     time: `${String(block.hour).padStart(2, '0')}:00`,
     color: block.color,
   }));
@@ -283,6 +304,20 @@ const PlanDetail = ({ plan, onBack, onDelete }: { plan: StudyPlan; onBack: () =>
         }},
       ]
     );
+  };
+
+  const remindSession = async (subject: string, day: number, hour: number) => {
+    try {
+      await scheduleStudyReminder({
+        title: `Study: ${subject}`,
+        body: `${plan.name} starts soon.`,
+        day,
+        hour,
+      });
+      Alert.alert('Reminder set', `Orbit will remind you 15 minutes before ${subject}.`);
+    } catch (error: any) {
+      Alert.alert('Reminder unavailable', error?.message || 'Could not schedule this reminder.');
+    }
   };
 
   const progress = sessions.length > 0 ? Math.round((completedSessions.size / sessions.length) * 100) : 0;
@@ -360,6 +395,9 @@ const PlanDetail = ({ plan, onBack, onDelete }: { plan: StudyPlan; onBack: () =>
                 <Text style={pd.sessionSubject}>{sess.subject}</Text>
                 <Text style={pd.sessionTime}>{sess.time}</Text>
               </View>
+              <TouchableOpacity style={pd.reminderBtn} onPress={() => remindSession(sess.subject, sess.day, sess.hour)}>
+                <Text style={pd.reminderText}>Remind</Text>
+              </TouchableOpacity>
               <View style={[pd.sessionCheck, done && { backgroundColor: colors.green, borderColor: colors.green }]}>
                 {done && <Text style={pd.sessionCheckMark}>✓</Text>}
               </View>
@@ -381,6 +419,9 @@ const PlanDetail = ({ plan, onBack, onDelete }: { plan: StudyPlan; onBack: () =>
                 <Text style={pd.sessionSubject}>{sess.subject}</Text>
                 <Text style={pd.sessionTime}>{['','Mon','Tue','Wed','Thu','Fri'][sess.day]} · {sess.time}</Text>
               </View>
+              <TouchableOpacity style={pd.reminderBtn} onPress={() => remindSession(sess.subject, sess.day, sess.hour)}>
+                <Text style={pd.reminderText}>Remind</Text>
+              </TouchableOpacity>
               <View style={[pd.sessionCheck, done && { backgroundColor: colors.green, borderColor: colors.green }]}>
                 {done && <Text style={pd.sessionCheckMark}>✓</Text>}
               </View>
@@ -422,6 +463,8 @@ const pd = StyleSheet.create({
   sessionInfo: { flex: 1, padding: 14, gap: 3 },
   sessionSubject: { color: colors.foreground, fontSize: 14, fontWeight: '700' },
   sessionTime: { color: colors.muted, fontSize: 12 },
+  reminderBtn: { height: 34, paddingHorizontal: 12, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border, marginRight: 10 },
+  reminderText: { color: colors.muted, fontSize: 11, fontWeight: '900' },
   sessionCheck: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginRight: 14 },
   sessionCheckMark: { color: '#fff', fontSize: 13, fontWeight: '900' },
 });

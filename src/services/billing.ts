@@ -33,3 +33,30 @@ export const startBillingCheckout = async (planSlug: string, callbackUrl: string
   const response = await api.post('/api/billing/checkout', { planSlug, callbackUrl });
   return response.data as { authorizationUrl: string; accessCode: string; reference: string };
 };
+
+export const estimateTokens = (value: unknown) => {
+  const text = typeof value === 'string' ? value : JSON.stringify(value ?? '');
+  return Math.max(1, Math.ceil(text.length / 4));
+};
+
+export const recordAiUsageEvent = async ({
+  provider = 'supabase_edge',
+  feature,
+  prompt,
+  completion,
+  metadata,
+}: {
+  provider?: string;
+  feature: string;
+  prompt: unknown;
+  completion: unknown;
+  metadata?: Record<string, unknown>;
+}) => {
+  await api.post('/api/billing/usage-events', {
+    provider,
+    feature,
+    prompt_tokens: estimateTokens(prompt),
+    completion_tokens: estimateTokens(completion),
+    metadata,
+  });
+};
