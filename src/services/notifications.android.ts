@@ -1,6 +1,8 @@
 import { getPermissionsAsync, requestPermissionsAsync } from 'expo-notifications/build/NotificationPermissions';
 import { setNotificationHandler } from 'expo-notifications/build/NotificationsHandler';
 import scheduleNotificationAsync from 'expo-notifications/build/scheduleNotificationAsync';
+import setNotificationChannelAsync from 'expo-notifications/build/setNotificationChannelAsync.android';
+import { AndroidImportance } from 'expo-notifications/build/NotificationChannelManager.types';
 import {
   SchedulableTriggerInputTypes,
   type NotificationTriggerInput,
@@ -48,11 +50,17 @@ export const scheduleStudyReminder = async ({
   const allowed = await ensureNotificationPermission();
   if (!allowed) throw new Error('Notification permission was not granted.');
 
+  await setNotificationChannelAsync('study-reminders', {
+    name: 'Study reminders',
+    importance: AndroidImportance.HIGH,
+  });
+
   return scheduleNotificationAsync({
     content: { title, body, sound: true },
     trigger: {
       type: SchedulableTriggerInputTypes.DATE,
       date: nextDateForStudySession(day, hour),
+      channelId: 'study-reminders',
     } as NotificationTriggerInput,
   });
 };

@@ -9,7 +9,7 @@ export type BillingPlan = {
   currency: string;
   interval: 'two_weeks' | 'monthly' | 'yearly' | 'custom';
   ai_token_limit?: number;
-  provider_limits?: Record<string, number | string>;
+  provider_limits?: Record<string, unknown>;
   is_custom: boolean;
   active: boolean;
 };

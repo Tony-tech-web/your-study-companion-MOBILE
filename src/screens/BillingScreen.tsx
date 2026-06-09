@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { radius, spacing, typography } from '../lib/theme';
 import { useMobileTheme } from '../contexts/ThemeContext';
@@ -15,12 +15,34 @@ const intervalLabel: Record<string, string> = {
   custom: 'coming soon',
 };
 
+const checkoutError = (error: any) =>
+  error?.response?.data?.error ||
+  error?.response?.data?.message ||
+  error?.message ||
+  'Could not start checkout.';
+
+const getBreakdown = (plan: BillingPlan) => {
+  const limits = (plan.provider_limits || {}) as any;
+  const marginRate = Number(limits.owner_margin_rate || 0.15);
+  const base = Math.round(plan.amount / (1 + marginRate));
+  return {
+    limits,
+    providers: limits.providers || {},
+    estimate: limits.estimate,
+    marginRate,
+    base,
+    margin: Math.max(0, plan.amount - base),
+    total: plan.amount,
+  };
+};
+
 export default function BillingScreen() {
   const { colors } = useMobileTheme();
   const [plans, setPlans] = useState<BillingPlan[]>([]);
   const [status, setStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<BillingPlan | null>(null);
   const s = styles(colors);
 
   useEffect(() => {
@@ -40,14 +62,72 @@ export default function BillingScreen() {
       const result = await startBillingCheckout(plan.slug, 'orbit://billing-return');
       await Linking.openURL(result.authorizationUrl);
     } catch (error: any) {
-      Alert.alert('Paystack checkout', error?.response?.data?.error || 'Could not start checkout.');
+      Alert.alert('Paystack checkout', checkoutError(error));
     } finally {
       setBusy(null);
+      setSelectedPlan(null);
     }
   };
 
   return (
     <SafeAreaView style={s.root} edges={['top']}>
+      <Modal transparent animationType="fade" visible={!!selectedPlan} onRequestClose={() => setSelectedPlan(null)}>
+        <View style={s.modalBackdrop}>
+          {selectedPlan && (() => {
+            const breakdown = getBreakdown(selectedPlan);
+            return (
+              <View style={s.reviewCard}>
+                <View style={s.reviewTop}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.reviewEyebrow}>Review plan</Text>
+                    <Text style={s.reviewTitle}>{selectedPlan.name}</Text>
+                    <Text style={s.reviewSub}>{selectedPlan.description}</Text>
+                  </View>
+                  <TouchableOpacity style={s.closeBtn} onPress={() => setSelectedPlan(null)}>
+                    <Text style={s.closeText}>X</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={s.breakdownBox}>
+                  <PriceRow colors={colors} label="Plan access" value={formatNaira(breakdown.base)} />
+                  <PriceRow colors={colors} label={`Owner margin (${Math.round(breakdown.marginRate * 100)}%)`} value={formatNaira(breakdown.margin)} />
+                  <View style={s.divider} />
+                  <PriceRow colors={colors} label="Due today" value={formatNaira(breakdown.total)} strong />
+                </View>
+
+                <View style={s.reviewGrid}>
+                  <View style={s.reviewMetric}>
+                    <Text style={s.metricLabel}>AI tokens</Text>
+                    <Text style={s.metricValue}>{selectedPlan.ai_token_limit?.toLocaleString?.() || 'Custom'}</Text>
+                  </View>
+                  <View style={s.reviewMetric}>
+                    <Text style={s.metricLabel}>Provider cost</Text>
+                    <Text style={s.metricValue}>${breakdown.estimate?.provider_cost_usd ?? '0.00'}</Text>
+                  </View>
+                </View>
+
+                {Object.keys(breakdown.providers).length > 0 && (
+                  <View style={s.providerBox}>
+                    <Text style={s.providerTitle}>Provider allocation</Text>
+                    {Object.entries(breakdown.providers).map(([provider, config]: any) => (
+                      <PriceRow key={provider} colors={colors} label={provider} value={`${Number(config.tokens || 0).toLocaleString()} tokens`} />
+                    ))}
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  disabled={busy === selectedPlan.slug}
+                  activeOpacity={0.84}
+                  style={s.reviewAction}
+                  onPress={() => openCheckout(selectedPlan)}
+                >
+                  {busy === selectedPlan.slug ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={s.reviewActionText}>Continue to Paystack</Text>}
+                </TouchableOpacity>
+              </View>
+            );
+          })()}
+        </View>
+      </Modal>
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
         <View style={s.header}>
           <Text style={s.eyebrow}>Paystack Billing</Text>
@@ -91,7 +171,7 @@ export default function BillingScreen() {
                   <TouchableOpacity
                     disabled={plan.is_custom || !plan.active || current || busy === plan.slug}
                     activeOpacity={0.82}
-                    onPress={() => openCheckout(plan)}
+                    onPress={() => setSelectedPlan(plan)}
                     style={[s.action, featured && s.actionFeatured, (plan.is_custom || current) && s.actionDisabled]}
                   >
                     {busy === plan.slug ? (
@@ -112,8 +192,41 @@ export default function BillingScreen() {
   );
 }
 
+function PriceRow({ colors, label, value, strong }: { colors: any; label: string; value: string; strong?: boolean }) {
+  return (
+    <View style={priceRowStyles.row}>
+      <Text style={[priceRowStyles.label, { color: strong ? colors.foreground : colors.muted, fontWeight: strong ? '900' : '700', textTransform: label.length < 14 ? 'capitalize' : 'none' }]}>{label}</Text>
+      <Text style={[priceRowStyles.value, { color: colors.foreground, fontSize: strong ? 16 : 13 }]}>{value}</Text>
+    </View>
+  );
+}
+
+const priceRowStyles = StyleSheet.create({
+  row: { minHeight: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
+  label: { fontSize: 12 },
+  value: { fontWeight: '900' },
+});
+
 const styles = (colors: any) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  modalBackdrop: { flex: 1, justifyContent: 'center', padding: spacing.lg, backgroundColor: 'rgba(0,0,0,0.72)' },
+  reviewCard: { borderRadius: 30, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, padding: spacing.lg, gap: spacing.md },
+  reviewTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+  reviewEyebrow: { color: colors.muted, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.4 },
+  reviewTitle: { color: colors.foreground, fontSize: 25, fontWeight: '900', marginTop: 3 },
+  reviewSub: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 4 },
+  closeBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, alignItems: 'center', justifyContent: 'center' },
+  closeText: { color: colors.foreground, fontSize: 22, fontWeight: '700', marginTop: -2 },
+  breakdownBox: { borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, padding: spacing.md },
+  divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.xs },
+  reviewGrid: { flexDirection: 'row', gap: spacing.sm },
+  reviewMetric: { flex: 1, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, padding: spacing.md },
+  metricLabel: { color: colors.muted, fontSize: 10, fontWeight: '900', textTransform: 'uppercase' },
+  metricValue: { color: colors.foreground, fontSize: 17, fontWeight: '900', marginTop: 4 },
+  providerBox: { borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, padding: spacing.md },
+  providerTitle: { color: colors.muted, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginBottom: spacing.xs },
+  reviewAction: { height: 52, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
+  reviewActionText: { color: colors.onPrimary, fontSize: typography.sm, fontWeight: '900' },
   content: { padding: spacing.lg, paddingBottom: 150, gap: spacing.lg },
   header: { gap: 6 },
   eyebrow: { color: colors.muted, fontSize: typography.xs, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },

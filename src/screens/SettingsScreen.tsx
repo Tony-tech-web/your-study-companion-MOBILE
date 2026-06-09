@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { AppTheme, fontFamily, radius, shadow, spacing, typography } from '../lib/theme';
@@ -23,6 +23,8 @@ export default function SettingsScreen() {
   const s = styles(colors, theme);
   const [notifications, setNotifications] = useState(true);
   const [usage, setUsage] = useState<any>(null);
+  const [usageLoading, setUsageLoading] = useState(true);
+  const [usageError, setUsageError] = useState('');
   const [profile, setProfile] = useState<any>(null);
   const [editing, setEditing] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -34,8 +36,41 @@ export default function SettingsScreen() {
   const fieldOfStudy = profile?.field_of_study || 'Field of study not set';
   const initials = displayName.slice(0, 2).toUpperCase();
 
+  const loadUsage = useCallback(() => {
+    let alive = true;
+    setUsageLoading(true);
+    setUsageError('');
+
+    const usageTimeout = new Promise<{ timedOut: true }>((resolve) => {
+      setTimeout(() => resolve({ timedOut: true }), 8000);
+    });
+
+    Promise.race([getBillingUsage(), usageTimeout])
+      .then((next: any) => {
+        if (!alive) return;
+        if (next?.timedOut) {
+          setUsage(null);
+          setUsageError('Usage is taking longer than expected.');
+          return;
+        }
+        setUsage(next);
+      })
+      .catch((error: any) => {
+        if (!alive) return;
+        setUsage(null);
+        setUsageError(error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Usage could not load.');
+      })
+      .finally(() => {
+        if (alive) setUsageLoading(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   useEffect(() => {
-    getBillingUsage().then(setUsage).catch(() => setUsage(null));
+    const cancelUsage = loadUsage();
     getMyProfile()
       .then(next => {
         setProfile(next);
@@ -43,7 +78,8 @@ export default function SettingsScreen() {
         setFieldDraft(next?.field_of_study || '');
       })
       .catch(() => null);
-  }, []);
+    return cancelUsage;
+  }, [loadUsage]);
 
   const handleSignOut = () => {
     Alert.alert('Sign out', 'End this Orbit session on this device?', [
@@ -184,11 +220,24 @@ export default function SettingsScreen() {
         </Section>
 
         <Section title="Usage" colors={colors} theme={theme}>
-          <View style={s.usageStrip}>
-            <UsageItem colors={colors} label="Used" value={usage?.tokens_used?.toLocaleString?.() ?? '0'} />
-            <UsageItem colors={colors} label="Remaining" value={usage?.tokens_remaining === null ? 'Plan' : usage?.tokens_remaining?.toLocaleString?.() ?? '0'} />
-            <UsageItem colors={colors} label="AI uses" value={String(usage?.total_ai_interactions ?? 0)} />
-          </View>
+          {usageLoading ? (
+            <View style={s.usageLoading}>
+              <ActivityIndicator color={colors.muted} />
+            </View>
+          ) : usageError ? (
+            <View style={s.usageErrorBox}>
+              <Text style={s.usageErrorText}>{usageError}</Text>
+              <TouchableOpacity style={s.retryBtn} onPress={loadUsage}>
+                <Text style={s.retryText}>Retry usage</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={s.usageStrip}>
+              <UsageItem colors={colors} label="Used" value={usage?.tokens_used?.toLocaleString?.() ?? '0'} />
+              <UsageItem colors={colors} label="Remaining" value={usage?.tokens_remaining === null ? 'Plan' : usage?.tokens_remaining?.toLocaleString?.() ?? '0'} />
+              <UsageItem colors={colors} label="AI uses" value={String(usage?.total_ai_interactions ?? 0)} />
+            </View>
+          )}
         </Section>
 
         <Section title="Device" colors={colors} theme={theme}>
@@ -389,6 +438,11 @@ const styles = (colors: any, theme: string) => StyleSheet.create({
   rowLabel: { color: colors.foreground, fontFamily: fontFamily.sans, fontSize: typography.sm, fontWeight: '900' },
   rowSub: { color: colors.muted, fontFamily: fontFamily.sans, fontSize: 11, marginTop: 3, fontWeight: '600' },
   usageStrip: { flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.md },
+  usageLoading: { minHeight: 80, alignItems: 'flex-start', justifyContent: 'center', paddingVertical: spacing.md },
+  usageErrorBox: { gap: spacing.sm, paddingVertical: spacing.md },
+  usageErrorText: { color: colors.red, fontFamily: fontFamily.sans, fontSize: 12, fontWeight: '800', lineHeight: 17 },
+  retryBtn: { alignSelf: 'flex-start', height: 36, borderRadius: radius.full, paddingHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
+  retryText: { color: colors.onPrimary, fontFamily: fontFamily.sans, fontSize: 12, fontWeight: '900' },
   signOutBtn: { height: 50, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.red + '40', backgroundColor: colors.red + '12' },
   signOutText: { color: colors.red, fontFamily: fontFamily.sans, fontSize: typography.sm, fontWeight: '900' },
 });
