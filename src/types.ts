@@ -31,8 +31,10 @@ export interface StudyPlan {
 export interface StudyPlanBlock {
   day: number;
   hour: number;
+  minute?: number;
   subject: string;
   duration: number;
+  durationMinutes?: number;
   color: string;
 }
 

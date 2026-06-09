@@ -16,6 +16,25 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+export const isInvalidRefreshToken = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error || '');
+  const lower = message.toLowerCase();
+  return lower.includes('invalid refresh token') || lower.includes('refresh token not found');
+};
+
+export const getCurrentSession = async () => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session;
+  } catch (error) {
+    if (isInvalidRefreshToken(error)) {
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => null);
+      return null;
+    }
+    throw error;
+  }
+};
+
 // Keep session alive when app comes to foreground
 AppState.addEventListener('change', (state) => {
   if (state === 'active') {
@@ -69,7 +88,7 @@ export async function callEdgeFunction(
   name: string,
   body: Record<string, unknown>
 ): Promise<Response> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const session = await getCurrentSession();
   const token = session?.access_token;
   if (!token) throw new Error('No active session. Please sign in.');
 

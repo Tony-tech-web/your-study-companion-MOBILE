@@ -18,6 +18,46 @@ const PLAN_COLORS = ['#6366f1','#10b981','#f27d26','#8b5cf6','#f59e0b','#ef4444'
 // ─── Helpers ───────────────────────────────────────────────────────────────
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const pad = (value: number) => String(value).padStart(2, '0');
+
+const getBlockMinute = (block: StudyPlanBlock) => Number.isFinite(block.minute) ? block.minute! : 0;
+const getDurationMinutes = (block: StudyPlanBlock) =>
+  Number.isFinite(block.durationMinutes) ? block.durationMinutes! : Math.max(15, Math.round((block.duration || 1) * 60));
+
+const formatBlockTime = (block: StudyPlanBlock) => {
+  const hour = Math.max(0, Math.min(23, Number(block.hour) || 0));
+  const minute = Math.max(0, Math.min(59, getBlockMinute(block)));
+  const suffix = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${pad(minute)} ${suffix}`;
+};
+
+const formatDuration = (block: StudyPlanBlock) => {
+  const mins = getDurationMinutes(block);
+  if (mins % 60 === 0) return `${mins / 60}h`;
+  if (mins < 60) return `${mins}m`;
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+};
+
+const normalizeBlocks = (blocks: StudyPlanBlock[] = []) => blocks.map((block, index) => {
+  const durationMinutes = getDurationMinutes(block);
+  return {
+    ...block,
+    day: Math.max(0, Math.min(6, Number(block.day) || 0)),
+    hour: Math.max(0, Math.min(23, Number(block.hour) || 9)),
+    minute: Math.max(0, Math.min(59, getBlockMinute(block))),
+    duration: Math.max(0.25, Math.round((durationMinutes / 60) * 4) / 4),
+    durationMinutes,
+    color: block.color || PLAN_COLORS[index % PLAN_COLORS.length],
+  };
+});
+
+const parseTimeInput = (value: string) => {
+  const [rawHour, rawMinute] = value.split(':');
+  const hour = Math.max(0, Math.min(23, Number(rawHour) || 0));
+  const minute = Math.max(0, Math.min(59, Number(rawMinute) || 0));
+  return { hour, minute };
+};
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
@@ -99,7 +139,7 @@ const cal = StyleSheet.create({
 });
 
 // ─── Create Plan Modal ─────────────────────────────────────────────────────
-const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClose: () => void; onSave: (p: StudyPlan) => void }) => {
+const CreatePlanModal = ({ visible, onClose, onSave, initialPlan }: { visible: boolean; onClose: () => void; onSave: (p: StudyPlan) => void; initialPlan?: StudyPlan | null }) => {
   const [name, setName] = useState('');
   const [subjectsInput, setSubjectsInput] = useState('');
   const [hours, setHours] = useState('');
@@ -109,7 +149,21 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
   const [saving, setSaving] = useState(false);
   const [scheduleBlocks, setScheduleBlocks] = useState<StudyPlanBlock[]>([]);
 
-  const reset = () => { setName(''); setSubjectsInput(''); setHours(''); setError(''); setStep('form'); setSaving(false); setScheduleBlocks([]); };
+  const reset = () => { setName(''); setSubjectsInput(''); setHours(''); setDaysPerWeek('5'); setError(''); setStep('form'); setSaving(false); setScheduleBlocks([]); };
+
+  useEffect(() => {
+    if (!visible) return;
+    if (initialPlan) {
+      setName(initialPlan.name);
+      setSubjectsInput(initialPlan.subjects.join(', '));
+      setHours(String(initialPlan.totalHours || ''));
+      setScheduleBlocks(normalizeBlocks(initialPlan.scheduleBlocks || []));
+      setError('');
+      setStep('form');
+    } else {
+      reset();
+    }
+  }, [visible, initialPlan]);
 
   const handleGenerate = async () => {
     if (!name || !hours || !subjectsInput) { setError('Please fill all fields'); return; }
@@ -121,7 +175,7 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
       }
       const messages = [{
         role: 'user',
-        content: `Generate a weekly study schedule for "${name}". Subjects: ${subjectsInput}. Hours/week: ${hours}. Days/week: ${daysPerWeek}. Return JSON only with blocks: [{day,hour,subject,duration,color}]. day is 0=Sun. Use these colors: ${PLAN_COLORS.join(',')}. No markdown.`,
+        content: `Generate a weekly study schedule for "${name}". Subjects: ${subjectsInput}. Hours/week: ${hours}. Days/week: ${daysPerWeek}. Return JSON only with blocks: [{day,hour,minute,subject,duration,durationMinutes,color}]. day is 0=Sun. hour is 24h. minute must be 0, 15, 30, or 45. durationMinutes must be 45, 60, 75, 90, or 120. Use readable AM/PM-friendly study times between 7:00 and 21:00. Use these colors: ${PLAN_COLORS.join(',')}. No markdown, no emoji.`,
       }];
       const res = await callEdgeFunction('ai-chat', {
         messages,
@@ -131,7 +185,7 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
       const data = await res.json();
       const text = data.text || data.reply || data.message || '';
       const parsed = JSON.parse(String(text).replace(/```json|```/g, '').trim());
-      setScheduleBlocks(Array.isArray(parsed.blocks) ? parsed.blocks : []);
+      setScheduleBlocks(normalizeBlocks(Array.isArray(parsed.blocks) ? parsed.blocks : []));
       await recordAiUsageEvent({
         provider: 'edge:auto',
         feature: 'planner_generate',
@@ -147,7 +201,7 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
           totalHours: parseInt(hours) || subjects.length,
           daysPerWeek: parseInt(daysPerWeek) || 5,
         });
-        setScheduleBlocks(randomized.blocks);
+        setScheduleBlocks(normalizeBlocks(randomized.blocks));
       } catch {
         setScheduleBlocks([]);
       }
@@ -158,13 +212,15 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
   const handleSave = async () => {
     setSaving(true);
     try {
-      const plan = await createStudyPlan({
+      const payload = {
         name,
         subjects: subjectsInput.split(',').map(s => s.trim()).filter(Boolean),
         totalHours: parseInt(hours) || 0,
-        scheduleBlocks,
-        completedSessionIds: [],
-      });
+        scheduleBlocks: normalizeBlocks(scheduleBlocks),
+        completedSessionIds: initialPlan?.completedSessionIds || [],
+        progress: initialPlan?.progress || 0,
+      };
+      const plan = initialPlan ? await updateStudyPlan(initialPlan.id, payload) : await createStudyPlan(payload);
       onSave(plan);
       onClose();
       reset();
@@ -176,7 +232,7 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <View style={cm.root}>
         <View style={cm.header}>
-          <Text style={cm.title}>{step === 'generating' ? 'AI is planning…' : step === 'done' ? 'Ready to save' : 'New Study Plan'}</Text>
+          <Text style={cm.title}>{step === 'generating' ? 'AI is planning...' : step === 'done' ? 'Ready to save' : initialPlan ? 'Edit Study Plan' : 'New Study Plan'}</Text>
           <TouchableOpacity onPress={() => { onClose(); reset(); }}>
             <Text style={cm.cancel}>Cancel</Text>
           </TouchableOpacity>
@@ -202,13 +258,18 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
               <TouchableOpacity style={cm.generateBtn} onPress={handleGenerate}>
                 <Text style={cm.generateBtnText}>Generate with AI</Text>
               </TouchableOpacity>
+              {initialPlan ? (
+                <TouchableOpacity style={cm.secondaryBtn} onPress={() => setStep('done')}>
+                  <Text style={cm.secondaryBtnText}>Edit Schedule Times</Text>
+                </TouchableOpacity>
+              ) : null}
             </>
           )}
 
           {step === 'generating' && (
             <View style={cm.genWrap}>
               <ActivityIndicator color={colors.primary} size="large" />
-              <Text style={cm.genText}>Orbit is building your schedule…</Text>
+              <Text style={cm.genText}>Orbit is building your schedule...</Text>
               <Text style={cm.genSub}>Optimising for {daysPerWeek} days/week</Text>
             </View>
           )}
@@ -218,9 +279,64 @@ const CreatePlanModal = ({ visible, onClose, onSave }: { visible: boolean; onClo
               <View style={cm.doneIcon}><Text style={cm.doneIconText}>✓</Text></View>
               <Text style={cm.doneTitle}>Schedule ready</Text>
               <Text style={cm.doneSub}>Your plan "{name}" is ready with {scheduleBlocks.length} scheduled session{scheduleBlocks.length === 1 ? '' : 's'}.</Text>
+              {scheduleBlocks.map((block, index) => (
+                <View key={`${block.subject}-${index}`} style={cm.scheduleEditor}>
+                  <View style={cm.scheduleTop}>
+                    <TextInput
+                      style={cm.subjectInput}
+                      value={block.subject}
+                      onChangeText={(subject) => setScheduleBlocks(prev => normalizeBlocks(prev.map((item, i) => i === index ? { ...item, subject } : item)))}
+                      placeholder="Subject"
+                      placeholderTextColor={colors.muted}
+                    />
+                    <Text style={cm.scheduleMeta}>{formatDuration(block)}</Text>
+                  </View>
+                  <View style={cm.dayPills}>
+                    {DAY_NAMES.map((dayName, day) => (
+                      <TouchableOpacity
+                        key={dayName}
+                        style={[cm.dayPill, block.day === day && cm.dayPillActive]}
+                        onPress={() => setScheduleBlocks(prev => normalizeBlocks(prev.map((item, i) => i === index ? { ...item, day } : item)))}>
+                        <Text style={[cm.dayPillText, block.day === day && cm.dayPillTextActive]}>{dayName}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <View style={cm.timeRow}>
+                    <View style={cm.timeField}>
+                      <Text style={cm.smallLabel}>Start time</Text>
+                      <TextInput
+                        style={cm.compactInput}
+                        value={`${pad(block.hour)}:${pad(getBlockMinute(block))}`}
+                        onChangeText={(value) => {
+                          const { hour, minute } = parseTimeInput(value);
+                          setScheduleBlocks(prev => normalizeBlocks(prev.map((item, i) => i === index ? { ...item, hour, minute } : item)));
+                        }}
+                        placeholder="09:30"
+                        placeholderTextColor={colors.muted}
+                        keyboardType="numbers-and-punctuation"
+                      />
+                    </View>
+                    <View style={cm.timeField}>
+                      <Text style={cm.smallLabel}>Minutes</Text>
+                      <TextInput
+                        style={cm.compactInput}
+                        value={String(getDurationMinutes(block))}
+                        onChangeText={(value) => {
+                          const durationMinutes = Math.max(15, Math.min(240, Number(value) || 60));
+                          setScheduleBlocks(prev => normalizeBlocks(prev.map((item, i) => i === index ? { ...item, durationMinutes, duration: durationMinutes / 60 } : item)));
+                        }}
+                        placeholder="90"
+                        placeholderTextColor={colors.muted}
+                        keyboardType="numeric"
+                      />
+                    </View>
+                    <Text style={cm.previewTime}>{formatBlockTime(block)}</Text>
+                  </View>
+                </View>
+              ))}
               {error ? <View style={cm.errorBox}><Text style={cm.errorText}>{error}</Text></View> : null}
               <TouchableOpacity style={[cm.saveBtn, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
-                {saving ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={cm.saveBtnText}>Save Plan</Text>}
+                {saving ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={cm.saveBtnText}>{initialPlan ? 'Save Changes' : 'Save Plan'}</Text>}
               </TouchableOpacity>
             </View>
           )}
@@ -241,6 +357,8 @@ const cm = StyleSheet.create({
   input: { backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, color: colors.foreground, fontSize: 15, borderWidth: 1, borderColor: colors.border },
   generateBtn: { backgroundColor: colors.primary, borderRadius: radius.lg, padding: spacing.md, alignItems: 'center', marginTop: spacing.sm },
   generateBtnText: { color: colors.onPrimary, fontSize: 15, fontWeight: '800', letterSpacing: 0.2 },
+  secondaryBtn: { borderRadius: radius.lg, padding: spacing.md, alignItems: 'center', borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input },
+  secondaryBtnText: { color: colors.foreground, fontSize: 14, fontWeight: '800' },
   genWrap: { alignItems: 'center', paddingVertical: 60, gap: 16 },
   genText: { color: colors.foreground, fontSize: 16, fontWeight: '700' },
   genSub: { color: colors.muted, fontSize: 13 },
@@ -249,6 +367,20 @@ const cm = StyleSheet.create({
   doneIconText: { color: '#fff', fontSize: 32, fontWeight: '900' },
   doneTitle: { color: colors.foreground, fontSize: 22, fontWeight: '900' },
   doneSub: { color: colors.muted, fontSize: 14, textAlign: 'center' },
+  scheduleEditor: { width: '100%', borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, padding: 12, gap: 10 },
+  scheduleTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  subjectInput: { flex: 1, minHeight: 42, borderRadius: 14, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border, color: colors.foreground, paddingHorizontal: 12, fontSize: 13, fontWeight: '700' },
+  scheduleMeta: { color: colors.primary, fontSize: 12, fontWeight: '900' },
+  dayPills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  dayPill: { paddingHorizontal: 9, paddingVertical: 6, borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input },
+  dayPillActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  dayPillText: { color: colors.muted, fontSize: 10, fontWeight: '900' },
+  dayPillTextActive: { color: colors.onPrimary },
+  timeRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  timeField: { flex: 1, gap: 5 },
+  smallLabel: { color: colors.muted, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.6 },
+  compactInput: { height: 42, borderRadius: 14, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border, color: colors.foreground, paddingHorizontal: 12, fontSize: 13, fontWeight: '800' },
+  previewTime: { minWidth: 74, height: 42, borderRadius: 14, overflow: 'hidden', textAlign: 'center', textAlignVertical: 'center', color: colors.foreground, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border, fontSize: 11, fontWeight: '900', paddingTop: 12 },
   saveBtn: { backgroundColor: colors.primary, borderRadius: radius.lg, paddingHorizontal: 40, paddingVertical: spacing.md, marginTop: spacing.sm },
   saveBtnText: { color: colors.onPrimary, fontSize: 16, fontWeight: '800' },
   errorBox: { backgroundColor: colors.red + '18', borderRadius: radius.sm, padding: spacing.sm, borderWidth: 1, borderColor: colors.red + '30' },
@@ -256,7 +388,7 @@ const cm = StyleSheet.create({
 });
 
 // ─── Plan Detail ───────────────────────────────────────────────────────────
-const PlanDetail = ({ plan, onBack, onDelete }: { plan: StudyPlan; onBack: () => void; onDelete: () => void }) => {
+const PlanDetail = ({ plan, onBack, onDelete, onEdit }: { plan: StudyPlan; onBack: () => void; onDelete: () => void; onEdit: () => void }) => {
   const [completedSessions, setCompletedSessions] = useState<Set<string>>(new Set(plan.completedSessionIds || []));
 
   const weekDays = [1,2,3,4,5];
@@ -267,19 +399,23 @@ const PlanDetail = ({ plan, onBack, onDelete }: { plan: StudyPlan; onBack: () =>
     weekDays.slice(0, Math.max(1, Math.ceil(weekDays.length / Math.max(plan.subjects.length, 1)))).map((day, di) => ({
       day: weekDays[(si + di) % weekDays.length],
       hour: parseInt(sessionTimes[di % sessionTimes.length], 10),
+      minute: 0,
       subject: sub,
       duration: 1,
+      durationMinutes: 60,
       color: dayColors[si % dayColors.length],
     }))
   );
-  const scheduleBlocks = plan.scheduleBlocks?.length ? plan.scheduleBlocks : fallbackBlocks;
-  const sessionId = (block: StudyPlanBlock) => `${plan.id}-${block.day}-${block.hour}-${block.subject}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-');
+  const scheduleBlocks = normalizeBlocks(plan.scheduleBlocks?.length ? plan.scheduleBlocks : fallbackBlocks);
+  const sessionId = (block: StudyPlanBlock) => `${plan.id}-${block.day}-${block.hour}-${getBlockMinute(block)}-${block.subject}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-');
   const sessions = scheduleBlocks.map(block => ({
     id: sessionId(block),
     subject: block.subject,
     day: block.day,
     hour: block.hour,
-    time: `${String(block.hour).padStart(2, '0')}:00`,
+    minute: getBlockMinute(block),
+    time: formatBlockTime(block),
+    duration: formatDuration(block),
     color: block.color,
   }));
 
@@ -306,13 +442,14 @@ const PlanDetail = ({ plan, onBack, onDelete }: { plan: StudyPlan; onBack: () =>
     );
   };
 
-  const remindSession = async (subject: string, day: number, hour: number) => {
+  const remindSession = async (subject: string, day: number, hour: number, minute: number) => {
     try {
       await scheduleStudyReminder({
         title: `Study: ${subject}`,
         body: `${plan.name} starts soon.`,
         day,
         hour,
+        minute,
       });
       Alert.alert('Reminder set', `Orbit will remind you 15 minutes before ${subject}.`);
     } catch (error: any) {
@@ -332,6 +469,9 @@ const PlanDetail = ({ plan, onBack, onDelete }: { plan: StudyPlan; onBack: () =>
           <Text style={pd.backText}>Plans</Text>
         </TouchableOpacity>
         <Text style={pd.planTitle} numberOfLines={1}>{plan.name}</Text>
+        <TouchableOpacity onPress={onEdit} style={pd.editBtn}>
+          <Text style={pd.editText}>Edit</Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={onDelete}>
           <Text style={pd.deleteText}>Delete</Text>
         </TouchableOpacity>
@@ -393,9 +533,9 @@ const PlanDetail = ({ plan, onBack, onDelete }: { plan: StudyPlan; onBack: () =>
               <View style={[pd.sessionColorBar, { backgroundColor: sess.color }]} />
               <View style={pd.sessionInfo}>
                 <Text style={pd.sessionSubject}>{sess.subject}</Text>
-                <Text style={pd.sessionTime}>{sess.time}</Text>
+                <Text style={pd.sessionTime}>{sess.time} · {sess.duration}</Text>
               </View>
-              <TouchableOpacity style={pd.reminderBtn} onPress={() => remindSession(sess.subject, sess.day, sess.hour)}>
+              <TouchableOpacity style={pd.reminderBtn} onPress={() => remindSession(sess.subject, sess.day, sess.hour, sess.minute)}>
                 <Text style={pd.reminderText}>Remind</Text>
               </TouchableOpacity>
               <View style={[pd.sessionCheck, done && { backgroundColor: colors.green, borderColor: colors.green }]}>
@@ -417,9 +557,9 @@ const PlanDetail = ({ plan, onBack, onDelete }: { plan: StudyPlan; onBack: () =>
               <View style={[pd.sessionColorBar, { backgroundColor: sess.color }]} />
               <View style={pd.sessionInfo}>
                 <Text style={pd.sessionSubject}>{sess.subject}</Text>
-                <Text style={pd.sessionTime}>{['','Mon','Tue','Wed','Thu','Fri'][sess.day]} · {sess.time}</Text>
+                <Text style={pd.sessionTime}>{DAY_NAMES[sess.day]} · {sess.time} · {sess.duration}</Text>
               </View>
-              <TouchableOpacity style={pd.reminderBtn} onPress={() => remindSession(sess.subject, sess.day, sess.hour)}>
+              <TouchableOpacity style={pd.reminderBtn} onPress={() => remindSession(sess.subject, sess.day, sess.hour, sess.minute)}>
                 <Text style={pd.reminderText}>Remind</Text>
               </TouchableOpacity>
               <View style={[pd.sessionCheck, done && { backgroundColor: colors.green, borderColor: colors.green }]}>
@@ -439,6 +579,8 @@ const pd = StyleSheet.create({
   backArrow: { color: colors.primary, fontSize: 16, fontWeight: '700' },
   backText: { color: colors.primary, fontSize: 15, fontWeight: '600' },
   planTitle: { flex: 1, color: colors.foreground, fontSize: 16, fontWeight: '800', textAlign: 'center' },
+  editBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input },
+  editText: { color: colors.foreground, fontSize: 12, fontWeight: '800' },
   deleteText: { color: colors.red, fontSize: 14, fontWeight: '600' },
   weekStrip: { flexDirection: 'row', paddingHorizontal: spacing.md, paddingVertical: spacing.md, gap: 2, backgroundColor: colors.card, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   weekDay: { flex: 1, alignItems: 'center', gap: 3 },
@@ -476,6 +618,7 @@ export default function PlannerScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<StudyPlan | null>(null);
+  const [editingPlan, setEditingPlan] = useState<StudyPlan | null>(null);
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
@@ -521,7 +664,16 @@ export default function PlannerScreen() {
   };
 
   if (selectedPlan) {
-    return <PlanDetail plan={selectedPlan} onBack={() => setSelectedPlan(null)} onDelete={() => handleDelete(selectedPlan.id)} />;
+    return <PlanDetail
+      plan={selectedPlan}
+      onBack={() => setSelectedPlan(null)}
+      onDelete={() => handleDelete(selectedPlan.id)}
+      onEdit={() => {
+        setEditingPlan(selectedPlan);
+        setSelectedPlan(null);
+        setShowCreate(true);
+      }}
+    />;
   }
 
   if (loading) return (
@@ -535,7 +687,15 @@ export default function PlannerScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <CreatePlanModal visible={showCreate} onClose={() => setShowCreate(false)} onSave={p => setPlans(prev => [p, ...prev])} />
+      <CreatePlanModal
+        visible={showCreate}
+        initialPlan={editingPlan}
+        onClose={() => { setShowCreate(false); setEditingPlan(null); }}
+        onSave={p => {
+          setPlans(prev => editingPlan ? prev.map(plan => plan.id === p.id ? p : plan) : [p, ...prev]);
+          setEditingPlan(null);
+        }}
+      />
 
       {/* Header */}
       <View style={pl.header}>
@@ -596,13 +756,13 @@ export default function PlannerScreen() {
           <View style={pl.dayActionCard}>
             <Text style={pl.dayActionTitle}>Scheduled sessions</Text>
             {selectedSessions.map(({ plan, block, color }) => (
-              <View key={`${plan.id}-${block.day}-${block.hour}-${block.subject}`} style={pl.daySession}>
+              <View key={`${plan.id}-${block.day}-${block.hour}-${getBlockMinute(block)}-${block.subject}`} style={pl.daySession}>
                 <View style={[pl.daySessionBar, { backgroundColor: color }]} />
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={pl.daySessionTitle} numberOfLines={1}>{block.subject}</Text>
-                  <Text style={pl.daySessionMeta}>{plan.name} · {String(block.hour).padStart(2, '0')}:00 · {block.duration}h</Text>
+                  <Text style={pl.daySessionMeta}>{plan.name} · {formatBlockTime(block)} · {formatDuration(block)}</Text>
                 </View>
-                <TouchableOpacity style={pl.daySessionBtn} onPress={() => setSelectedPlan(plan)}>
+                <TouchableOpacity style={pl.daySessionBtn} onPress={() => { setEditingPlan(plan); setShowCreate(true); }}>
                   <Text style={pl.daySessionBtnText}>Modify</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[pl.daySessionBtn, pl.daySessionDelete]} onPress={() => handleDelete(plan.id)}>
