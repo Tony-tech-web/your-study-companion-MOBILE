@@ -10,6 +10,11 @@ import { getBillingUsage } from '../services/billing';
 import { deactivateAccount, deleteAccount } from '../services/account';
 import { ensureNotificationPermission } from '../services/notifications';
 import { getMyProfile, updateMyProfile } from '../services/profile';
+import {
+  defaultNotificationPreferences,
+  getNotificationPreferences,
+  updateNotificationPreferences,
+} from '../services/notificationPreferences';
 
 const themeLabels: Array<{ value: AppTheme; label: string }> = [
   { value: 'dark', label: 'Dark' },
@@ -22,6 +27,7 @@ export default function SettingsScreen() {
   const { theme, colors, setTheme } = useMobileTheme();
   const s = styles(colors, theme);
   const [notifications, setNotifications] = useState(true);
+  const [notificationPrefs, setNotificationPrefs] = useState(defaultNotificationPreferences);
   const [usage, setUsage] = useState<any>(null);
   const [usageLoading, setUsageLoading] = useState(true);
   const [usageError, setUsageError] = useState('');
@@ -78,6 +84,12 @@ export default function SettingsScreen() {
         setFieldDraft(next?.field_of_study || '');
       })
       .catch(() => null);
+    getNotificationPreferences()
+      .then(next => {
+        setNotificationPrefs(next);
+        setNotifications(Boolean(next.planner_reminders));
+      })
+      .catch(() => null);
     return cancelUsage;
   }, [loadUsage]);
 
@@ -113,10 +125,14 @@ export default function SettingsScreen() {
   const toggleNotifications = async (value: boolean) => {
     if (!value) {
       setNotifications(false);
+      updateNotificationPreferences({ planner_reminders: false }).then(setNotificationPrefs).catch(() => null);
       return;
     }
     const allowed = await ensureNotificationPermission();
     setNotifications(allowed);
+    if (allowed) {
+      updateNotificationPreferences({ planner_reminders: true }).then(setNotificationPrefs).catch(() => null);
+    }
     if (!allowed) Alert.alert('Notifications blocked', 'Enable notifications in device settings to receive study reminders.');
   };
 
@@ -254,7 +270,7 @@ export default function SettingsScreen() {
           <View style={s.row}>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={s.rowLabel}>Mobile reminders</Text>
-              <Text style={s.rowSub}>Study notifications on this device</Text>
+              <Text style={s.rowSub}>{notificationPrefs.planner_reminders ? 'Planner reminders synced to your account' : 'Planner reminders are off'}</Text>
             </View>
             <Switch
               value={notifications}
