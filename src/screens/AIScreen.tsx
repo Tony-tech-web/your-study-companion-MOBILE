@@ -92,7 +92,7 @@ const ModeIcon = ({ mode, color, size = 18 }: { mode: ChatMode; color: string; s
 // ─── PDF Library Bottom Sheet ──────────────────────────────────────────────
 const renderMessageContent = (content: string, isUser: boolean, s: ReturnType<typeof styles>) => {
   if (isUser) {
-    return <Text style={[s.bubbleText, { color: '#fff' }]}>{content}</Text>;
+    return <Text style={[s.bubbleText, s.bubbleTextUser]}>{content}</Text>;
   }
 
   const lines = content.split('\n');
@@ -167,6 +167,7 @@ const PdfLibrarySheet = ({
   };
 
   const readyCount = selected.filter(id => pdfStates.find(s => s.pdfId === id)?.status === 'ready').length;
+  const canStart = selected.length > 0 && readyCount === selected.length;
 
   return (
     <Modal visible={visible} animationType="slide" transparent presentationStyle="overFullScreen">
@@ -253,13 +254,15 @@ const PdfLibrarySheet = ({
           <View style={sh.footer}>
             <TouchableOpacity
               onPress={() => { onClose(); onStart(selected); }}
-              disabled={selected.length === 0}
-              style={[sh.startBtn, { backgroundColor: accentColor, opacity: selected.length === 0 ? 0.35 : 1 }]}>
-              <ModeIcon mode={mode} color="#fff" size={18} />
+              disabled={!canStart}
+              style={[sh.startBtn, { backgroundColor: accentColor, opacity: canStart ? 1 : 0.35 }]}>
+              <ModeIcon mode={mode} color={colors.onPrimary} size={18} />
               <Text style={sh.startBtnText}>
-                {mode === 'teach'
-                  ? `Start Teaching (${selected.length} PDF${selected.length !== 1 ? 's' : ''})`
-                  : `Start Test (${selected.length} PDF${selected.length !== 1 ? 's' : ''})`}
+                {selected.length > 0 && !canStart
+                  ? `Preparing ${selected.length - readyCount} PDF${selected.length - readyCount !== 1 ? 's' : ''}`
+                  : mode === 'teach'
+                    ? `Start Teaching (${selected.length} PDF${selected.length !== 1 ? 's' : ''})`
+                    : `Start Test (${selected.length} PDF${selected.length !== 1 ? 's' : ''})`}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={onClose} style={sh.cancelBtn}>
@@ -298,7 +301,7 @@ const sheetStyles = (colors: any) => StyleSheet.create({
   progressFill: { height: '100%', borderRadius: 2 },
   footer: { padding: 16, gap: 8 },
   startBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 52, borderRadius: 20, },
-  startBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  startBtnText: { color: colors.onPrimary, fontSize: 15, fontWeight: '800' },
   cancelBtn: { height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.input },
   cancelBtnText: { color: colors.muted, fontSize: 14, fontWeight: '600' },
 });
@@ -644,8 +647,8 @@ export default function AIScreen() {
             {(['chat', 'teach', 'test'] as ChatMode[]).map(m => (
               <TouchableOpacity key={m} onPress={() => handleModePress(m)}
                 style={[s.modeBtn, mode === m && { backgroundColor: modeColor[m] }]}>
-                <ModeIcon mode={m} color={mode === m ? '#fff' : colors.muted} size={15} />
-                <Text style={[s.modeBtnText, mode === m && { color: '#fff', fontWeight: '800' }]}>
+                <ModeIcon mode={m} color={mode === m ? colors.onPrimary : colors.muted} size={15} />
+                <Text style={[s.modeBtnText, mode === m && { color: colors.onPrimary, fontWeight: '800' }]}>
                   {m.charAt(0).toUpperCase() + m.slice(1)}
                 </Text>
               </TouchableOpacity>
@@ -685,11 +688,12 @@ const styles = (colors: any) => StyleSheet.create({
   avatar: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
   avatarUser: { backgroundColor: colors.primary, borderColor: colors.primary },
   avatarAI: { backgroundColor: colors.card },
-  avatarText: { fontSize: 11, fontWeight: '900', color: '#fff', fontFamily: fontFamily.sans },
+  avatarText: { fontSize: 11, fontWeight: '900', color: colors.onPrimary, fontFamily: fontFamily.sans },
   bubble: { flex: 1, borderRadius: 20, padding: 14, maxWidth: '84%' },
   bubbleUser: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
   bubbleAI: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 4 },
   bubbleText: { color: colors.foreground, fontSize: 15, lineHeight: 24, fontFamily: fontFamily.reading },
+  bubbleTextUser: { color: colors.onPrimary, fontWeight: '700' },
   codeBlock: { marginTop: 8, marginBottom: 8, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(0,0,0,0.55)', overflow: 'hidden' },
   codeLang: { paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: fontFamily.sans },
   codeText: { padding: 12, color: '#f5f5f5', fontSize: 12, lineHeight: 19, fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }) },

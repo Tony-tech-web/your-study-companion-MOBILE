@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { supabase } from '../lib/supabase';
-import { radius, spacing, typography } from '../lib/theme';
+import { fontFamily, radius, shadow, spacing, typography } from '../lib/theme';
 import { useMobileTheme } from '../contexts/ThemeContext';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -19,8 +19,8 @@ const GoogleMark = () => (
 );
 
 export default function LoginScreen() {
-  const { colors } = useMobileTheme();
-  const s = useMemo(() => styles(colors), [colors]);
+  const { colors, theme } = useMobileTheme();
+  const s = useMemo(() => styles(colors, theme), [colors, theme]);
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -174,15 +174,11 @@ export default function LoginScreen() {
               <View style={s.divider} />
             </View>
 
-            <Text style={s.socialLabel}>Join With Your Favorite Social Media Account</Text>
-            <View style={s.socialRow}>
-              <TouchableOpacity style={s.socialBtn} onPress={handleGoogle} disabled={googleLoading}>
-                {googleLoading ? <ActivityIndicator color={colors.foreground} size="small" /> : <GoogleMark />}
-              </TouchableOpacity>
-              <View style={s.socialBtn}><Text style={s.socialIcon}>f</Text></View>
-              <View style={s.socialBtn}><Text style={s.socialIcon}>x</Text></View>
-              <View style={s.socialBtn}><Text style={s.socialIcon}>a</Text></View>
-            </View>
+            <Text style={s.socialLabel}>Continue with Google</Text>
+            <TouchableOpacity style={s.googleBtn} onPress={handleGoogle} disabled={googleLoading}>
+              {googleLoading ? <ActivityIndicator color={colors.foreground} size="small" /> : <GoogleMark />}
+              <Text style={s.googleText}>Google</Text>
+            </TouchableOpacity>
 
             <Text style={s.terms}>
               By signing in, you agree to our{' '}
@@ -210,17 +206,17 @@ const Input = ({ label, colors, compact, ...props }: any) => {
   );
 };
 
-const styles = (colors: any) => StyleSheet.create({
+const styles = (colors: any, theme: string = 'dark') => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   scroll: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, paddingVertical: spacing.xl },
-  card: { width: '100%', maxWidth: 390, borderRadius: 28, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, paddingHorizontal: 24, paddingVertical: 26, gap: 16 },
+  card: { width: '100%', maxWidth: 390, borderRadius: 28, borderWidth: 1, borderColor: colors.border, backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.9)' : colors.card, paddingHorizontal: 24, paddingVertical: 26, gap: 16, ...shadow.md },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 8 },
   logoMark: { width: 34, height: 34, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
-  logoText: { color: colors.onPrimary, fontSize: 16, fontWeight: '900' },
-  appName: { color: colors.foreground, fontSize: typography.base, fontWeight: '900' },
+  logoText: { color: colors.onPrimary, fontFamily: fontFamily.display, fontSize: 16, fontWeight: '900' },
+  appName: { color: colors.foreground, fontFamily: fontFamily.display, fontSize: typography.base, fontWeight: '900' },
   heading: { gap: 4, marginBottom: 2 },
-  title: { color: colors.foreground, fontSize: 24, fontWeight: '900', letterSpacing: -0.2 },
-  switchText: { color: colors.muted, fontSize: typography.sm, fontWeight: '600' },
+  title: { color: colors.foreground, fontFamily: fontFamily.display, fontSize: 24, fontWeight: '900' },
+  switchText: { color: colors.muted, fontFamily: fontFamily.sans, fontSize: typography.sm, fontWeight: '600' },
   switchLink: { color: colors.foreground, fontWeight: '900' },
   banner: { borderRadius: 16, borderWidth: 1, padding: spacing.sm },
   bannerError: { backgroundColor: colors.red + '16', borderColor: colors.red + '35' },
@@ -229,22 +225,21 @@ const styles = (colors: any) => StyleSheet.create({
   errorText: { color: colors.red },
   successText: { color: colors.green },
   twoCol: { flexDirection: 'row', gap: 10 },
-  fieldLabel: { color: colors.muted, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.7 },
-  input: { height: 48, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, color: colors.foreground, paddingHorizontal: 16, fontSize: typography.sm, fontWeight: '700' },
+  fieldLabel: { color: colors.muted, fontFamily: fontFamily.sans, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.7 },
+  input: { height: 48, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, color: colors.foreground, paddingHorizontal: 16, fontFamily: fontFamily.sans, fontSize: typography.sm, fontWeight: '700' },
   passwordRow: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, height: 48, paddingLeft: 16 },
-  passwordInput: { flex: 1, color: colors.foreground, fontSize: typography.sm, fontWeight: '700' },
+  passwordInput: { flex: 1, color: colors.foreground, fontFamily: fontFamily.sans, fontSize: typography.sm, fontWeight: '700' },
   passwordToggle: { height: 48, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' },
   passwordToggleText: { color: colors.muted, fontSize: typography.xs, fontWeight: '900' },
   forgotText: { alignSelf: 'flex-end', color: colors.muted, fontSize: typography.xs, fontWeight: '900' },
   primaryBtn: { height: 48, borderRadius: radius.full, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
-  primaryBtnText: { color: colors.onPrimary, fontSize: typography.sm, fontWeight: '900' },
+  primaryBtnText: { color: colors.onPrimary, fontFamily: fontFamily.sans, fontSize: typography.sm, fontWeight: '900' },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   divider: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
   dividerText: { color: colors.muted, fontSize: typography.xs, fontWeight: '800' },
   socialLabel: { color: colors.muted, textAlign: 'center', fontSize: 10, fontWeight: '700' },
-  socialRow: { flexDirection: 'row', justifyContent: 'center', gap: 12 },
-  socialBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border },
-  socialIcon: { color: colors.foreground, fontSize: typography.sm, fontWeight: '900' },
+  googleBtn: { height: 46, borderRadius: radius.full, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border },
+  googleText: { color: colors.foreground, fontFamily: fontFamily.sans, fontSize: typography.sm, fontWeight: '900' },
   terms: { color: colors.muted, fontSize: 10, textAlign: 'center', lineHeight: 16, marginTop: 2 },
   termsLink: { color: colors.foreground, fontWeight: '800', textDecorationLine: 'underline' },
 });

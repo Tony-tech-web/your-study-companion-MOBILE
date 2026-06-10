@@ -254,7 +254,7 @@ const styles = (colors: any, theme: string) => StyleSheet.create({
   },
   planCardFeatured: {
     borderColor: theme === 'light' ? 'rgba(17,17,17,0.22)' : colors.border,
-    backgroundColor: theme === 'light' ? '#ffffff' : 'rgba(255,255,255,0.08)',
+    backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.08)',
   },
   planTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   planName: { color: colors.foreground, fontSize: typography.xl, fontWeight: '900' },

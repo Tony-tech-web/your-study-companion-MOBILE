@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../src/contexts/AuthContext';
-import { MobileThemeProvider } from '../src/contexts/ThemeContext';
+import { MobileThemeProvider, useMobileTheme } from '../src/contexts/ThemeContext';
 import { useRouter, useSegments } from 'expo-router';
 import { Animated, Easing, Linking, StyleSheet } from 'react-native';
 import { handleDeepLink } from '../src/lib/supabase';
@@ -56,6 +56,7 @@ const OrbitSplashWord = () => (
 
 function RootLayoutNav() {
   const { session, loading } = useAuth();
+  const { theme } = useMobileTheme();
   const segments = useSegments();
   const router = useRouter();
   const [showSplashIntro, setShowSplashIntro] = useState(true);
@@ -137,6 +138,7 @@ function RootLayoutNav() {
 
   return (
     <>
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
         <Stack.Screen name="auth" />
         <Stack.Screen name="(tabs)" />
@@ -162,7 +164,6 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <MobileThemeProvider>
         <AuthProvider>
-          <StatusBar style="light" />
           <RootLayoutNav />
         </AuthProvider>
       </MobileThemeProvider>

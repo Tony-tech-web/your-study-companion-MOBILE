@@ -12,7 +12,7 @@ const STORAGE_KEY = 'orbit-mobile-theme';
 const ThemeContext = createContext<MobileThemeContextType | undefined>(undefined);
 
 export const MobileThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<AppTheme>('dark');
+  const [theme, setThemeState] = useState<AppTheme>('light');
 
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then(value => {

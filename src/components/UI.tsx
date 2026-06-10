@@ -87,12 +87,12 @@ export const SectionHeader = ({ title, action, onAction }: { title: string; acti
 };
 
 // Empty state
-export const EmptyState = ({ icon, title, subtitle }: { icon: string; title: string; subtitle?: string }) => {
+export const EmptyState = ({ icon, title, subtitle }: { icon?: string; title: string; subtitle?: string }) => {
   const { colors } = useMobileTheme();
   const sk = styles(colors);
   return (
   <View style={sk.empty}>
-    <Text style={sk.emptyIcon}>{icon}</Text>
+    {icon ? <Text style={sk.emptyIcon}>{icon}</Text> : <View style={sk.emptyMark} />}
     <Text style={sk.emptyTitle}>{title}</Text>
     {subtitle && <Text style={sk.emptySub}>{subtitle}</Text>}
   </View>
@@ -115,7 +115,8 @@ const styles = (colors: any) => StyleSheet.create({
   sectionTitle: { color: colors.muted, fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8 },
   sectionAction: { color: colors.primary, fontSize: 13, fontWeight: '600' },
   empty: { alignItems: 'center', padding: spacing.xxl, gap: spacing.sm },
-  emptyIcon: { fontSize: 52 },
+  emptyIcon: { color: colors.muted, fontSize: 32, fontWeight: '900' },
+  emptyMark: { width: 42, height: 42, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input },
   emptyTitle: { color: colors.foreground, fontSize: 17, fontWeight: '600' },
   emptySub: { color: colors.muted, fontSize: 13, textAlign: 'center', lineHeight: 20 },
 });
