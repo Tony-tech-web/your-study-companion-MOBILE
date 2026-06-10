@@ -298,11 +298,20 @@ const actionCardStyles = (colors: any) => StyleSheet.create({
   artImage: { resizeMode: 'cover' },
   scrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.16)',
+    backgroundColor: 'rgba(0,0,0,0.04)',
   },
-  copy: { gap: 3, maxWidth: '78%' },
-  title: { color: '#fff', fontFamily: fontFamily.display, fontSize: 18, fontWeight: '900' },
-  meta: { color: 'rgba(255,255,255,0.68)', fontFamily: fontFamily.sans, fontSize: 12, fontWeight: '800' },
+  copy: {
+    gap: 3,
+    maxWidth: '82%',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.glass,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  title: { color: colors.foreground, fontFamily: fontFamily.display, fontSize: 18, fontWeight: '900' },
+  meta: { color: colors.muted, fontFamily: fontFamily.sans, fontSize: 12, fontWeight: '800' },
   openPill: {
     alignSelf: 'flex-start',
     minWidth: 62,
@@ -310,10 +319,10 @@ const actionCardStyles = (colors: any) => StyleSheet.create({
     borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    backgroundColor: colors.primary,
     paddingHorizontal: 14,
   },
-  openText: { color: '#0A0A0A', fontFamily: fontFamily.sans, fontSize: 12, fontWeight: '900' },
+  openText: { color: colors.onPrimary, fontFamily: fontFamily.sans, fontSize: 12, fontWeight: '900' },
 });
 
 const styles = (colors: any, theme: string) => StyleSheet.create({
