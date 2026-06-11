@@ -111,10 +111,14 @@ export default function LoginScreen() {
     <SafeAreaView style={s.safe}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <View style={s.brandBlock}>
+            <Text style={s.appName}>Orbit</Text>
+            <Text style={s.tagline}>Elevate your focus.</Text>
+          </View>
+
           <View style={s.card}>
-            <View style={s.brandRow}>
+            <View style={s.hiddenBrandRow}>
               <View style={s.logoMark}><Text style={s.logoText}>O</Text></View>
-              <Text style={s.appName}>Orbit</Text>
             </View>
 
             <View style={s.heading}>
@@ -174,16 +178,21 @@ export default function LoginScreen() {
               <View style={s.divider} />
             </View>
 
-            <Text style={s.socialLabel}>Continue with Google</Text>
-            <TouchableOpacity style={s.googleBtn} onPress={handleGoogle} disabled={googleLoading}>
-              {googleLoading ? <ActivityIndicator color={colors.foreground} size="small" /> : <GoogleMark />}
-              <Text style={s.googleText}>Google</Text>
-            </TouchableOpacity>
+            <Text style={s.socialLabel}>OR CONTINUE WITH</Text>
+            <View style={s.socialRow}>
+              <TouchableOpacity style={[s.socialBtn, { opacity: 0.55 }]} disabled>
+                <Text style={s.socialText}>A</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.socialBtn} onPress={handleGoogle} disabled={googleLoading}>
+                {googleLoading ? <ActivityIndicator color={colors.foreground} size="small" /> : <GoogleMark />}
+              </TouchableOpacity>
+            </View>
 
             <Text style={s.terms}>
-              By signing in, you agree to our{' '}
-              <Text style={s.termsLink}>Terms of Service</Text> and{' '}
-              <Text style={s.termsLink}>Privacy Policy</Text>
+              {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
+              <Text style={s.termsLink} onPress={() => resetMode(mode === 'login' ? 'signup' : 'login')}>
+                {mode === 'login' ? 'Sign Up' : 'Sign In'}
+              </Text>
             </Text>
           </View>
         </ScrollView>
@@ -208,12 +217,14 @@ const Input = ({ label, colors, compact, ...props }: any) => {
 
 const styles = (colors: any, theme: string = 'dark') => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  scroll: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, paddingVertical: spacing.xl },
-  card: { width: '100%', maxWidth: 390, borderRadius: 28, borderWidth: 1, borderColor: colors.border, backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.9)' : colors.card, paddingHorizontal: 24, paddingVertical: 26, gap: 16, ...shadow.md },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 8 },
+  scroll: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingVertical: spacing.xl },
+  brandBlock: { alignItems: 'center', marginBottom: spacing.xl },
+  card: { width: '100%', maxWidth: 390, borderRadius: 28, borderWidth: 1, borderColor: colors.border, backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.6)' : colors.card, paddingHorizontal: 28, paddingVertical: 30, gap: 16, ...shadow.md },
+  hiddenBrandRow: { display: 'none' },
   logoMark: { width: 34, height: 34, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
   logoText: { color: colors.onPrimary, fontFamily: fontFamily.display, fontSize: 16, fontWeight: '900' },
-  appName: { color: colors.foreground, fontFamily: fontFamily.display, fontSize: typography.base, fontWeight: '900' },
+  appName: { color: colors.primary, fontFamily: fontFamily.display, fontSize: 34, lineHeight: 41, fontWeight: '900' },
+  tagline: { color: colors.muted, fontFamily: fontFamily.sans, fontSize: 15, lineHeight: 20, marginTop: 2 },
   heading: { gap: 4, marginBottom: 2 },
   title: { color: colors.foreground, fontFamily: fontFamily.display, fontSize: 24, fontWeight: '900' },
   switchText: { color: colors.muted, fontFamily: fontFamily.sans, fontSize: typography.sm, fontWeight: '600' },
@@ -237,7 +248,10 @@ const styles = (colors: any, theme: string = 'dark') => StyleSheet.create({
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   divider: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
   dividerText: { color: colors.muted, fontSize: typography.xs, fontWeight: '800' },
-  socialLabel: { color: colors.muted, textAlign: 'center', fontSize: 10, fontWeight: '700' },
+  socialLabel: { color: colors.muted, textAlign: 'center', fontSize: 10, fontWeight: '900', letterSpacing: 1.2 },
+  socialRow: { flexDirection: 'row', justifyContent: 'center', gap: 24 },
+  socialBtn: { width: 56, height: 56, borderRadius: 28, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, ...shadow.sm },
+  socialText: { color: colors.foreground, fontFamily: fontFamily.sans, fontSize: 16, fontWeight: '900' },
   googleBtn: { height: 46, borderRadius: radius.full, flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border },
   googleText: { color: colors.foreground, fontFamily: fontFamily.sans, fontSize: typography.sm, fontWeight: '900' },
   terms: { color: colors.muted, fontSize: 10, textAlign: 'center', lineHeight: 16, marginTop: 2 },

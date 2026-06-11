@@ -33,10 +33,10 @@ const icons: Record<RouteName | 'plus', string> = {
 };
 
 const primaryRoutes: Array<{ name: RouteName; label: string }> = [
-  { name: 'index', label: 'Dashboard' },
-  { name: 'ai', label: 'AI Assistant' },
-  { name: 'news', label: 'News' },
-  { name: 'settings', label: 'Settings' },
+  { name: 'index', label: 'Focus' },
+  { name: 'planner', label: 'Planner' },
+  { name: 'ai', label: 'AI' },
+  { name: 'courses', label: 'Library' },
 ];
 
 const moreRoutes: Array<{ name: RouteName; label: string; detail: string }> = [
@@ -104,7 +104,7 @@ function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
         key={route.name}
         onPress={() => goTo(route.name)}
         activeOpacity={0.75}
-        style={s.tab}
+        style={[s.tab, focused && s.tabActive]}
         accessibilityRole="button"
         accessibilityState={{ selected: focused }}
       >
@@ -161,22 +161,7 @@ function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
 
       <View style={[s.barWrap, { paddingBottom: Math.max(insets.bottom, 8) }]} pointerEvents="box-none">
         <View style={s.pill}>
-          {renderTab(primaryRoutes[0])}
-          {renderTab(primaryRoutes[1])}
-          <TouchableOpacity
-            onPress={() => setOpen(v => !v)}
-            activeOpacity={0.78}
-            style={s.plusSlot}
-            accessibilityRole="button"
-            accessibilityLabel="Open more navigation"
-          >
-            <View style={[s.plusButton, (open || moreActive) && s.plusButtonActive]}>
-              <Icon name="plus" color={open || moreActive ? colors.onPrimary : colors.foreground} size={24} strokeWidth={2.35} />
-            </View>
-            <Text style={[s.label, moreActive && s.labelActive]} numberOfLines={1}>More</Text>
-          </TouchableOpacity>
-          {renderTab(primaryRoutes[2])}
-          {renderTab(primaryRoutes[3])}
+          {primaryRoutes.map(renderTab)}
         </View>
       </View>
     </>
@@ -311,6 +296,15 @@ const styles = (colors: any, theme: string) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
+    borderRadius: 999,
+  },
+  tabActive: {
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 15,
+    elevation: 8,
   },
   plusSlot: {
     width: 68,
@@ -327,7 +321,7 @@ const styles = (colors: any, theme: string) => StyleSheet.create({
     justifyContent: 'center',
   },
   iconWrapActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: 'transparent',
   },
   plusButton: {
     width: 52,
@@ -358,6 +352,6 @@ const styles = (colors: any, theme: string) => StyleSheet.create({
     textAlign: 'center',
   },
   labelActive: {
-    color: colors.primary,
+    color: colors.onPrimary,
   },
 });

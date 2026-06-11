@@ -4,7 +4,7 @@ import {
   TextInput, Modal, ActivityIndicator, RefreshControl, Alert,
   Dimensions,
 } from 'react-native';
-import { spacing, radius, typography } from '../lib/theme';
+import { spacing, radius, typography, shadow } from '../lib/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getStudyPlans, createStudyPlan, updateStudyPlan, deleteStudyPlan, randomizeStudyPlan } from '../services/planner';
 import { callEdgeFunction } from '../lib/supabase';
@@ -125,7 +125,7 @@ const MiniCalendar = ({
 };
 
 const calStyles = (colors: any) => StyleSheet.create({
-  wrap: { backgroundColor: colors.card, borderRadius: 20, marginHorizontal: spacing.md, marginTop: spacing.md, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+  wrap: { backgroundColor: colors.glass, borderRadius: 32, marginHorizontal: spacing.md, marginTop: spacing.md, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', ...shadow.sm },
   nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   navBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.input },
   navArrow: { color: colors.primary, fontSize: 22, fontWeight: '700', lineHeight: 24 },
@@ -581,7 +581,7 @@ const PlanDetail = ({ plan, onBack, onDelete, onEdit }: { plan: StudyPlan; onBac
 };
 
 const pdStyles = (colors: any) => StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, backgroundColor: colors.card, gap: spacing.sm },
+  header: { flexDirection: 'row', alignItems: 'center', marginHorizontal: spacing.md, marginTop: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: 12, borderWidth: 1, borderColor: colors.border, borderRadius: radius.xl, backgroundColor: colors.glass, gap: spacing.sm, ...shadow.sm },
   backBtn: { flexDirection: 'row', alignItems: 'center' },
   backArrow: { color: colors.primary, fontSize: 16, fontWeight: '700' },
   backText: { color: colors.primary, fontSize: 15, fontWeight: '600' },
@@ -597,7 +597,7 @@ const pdStyles = (colors: any) => StyleSheet.create({
   weekDayDots: { flexDirection: 'row', gap: 2 },
   weekDot: { width: 4, height: 4, borderRadius: 2 },
   monthYear: { color: colors.muted, fontSize: 13, fontWeight: '600', paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.sm },
-  progressCard: { marginHorizontal: spacing.md, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border, gap: 8, marginBottom: spacing.md },
+  progressCard: { marginHorizontal: spacing.md, backgroundColor: colors.glass, borderRadius: radius.xxl, padding: spacing.md, borderWidth: 1, borderColor: colors.border, gap: 8, marginBottom: spacing.md, ...shadow.sm },
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   progressLabel: { color: colors.foreground, fontSize: 13, fontWeight: '700' },
   progressPct: { fontSize: 15, fontWeight: '900' },
@@ -605,9 +605,9 @@ const pdStyles = (colors: any) => StyleSheet.create({
   progressFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 3 },
   progressSub: { color: colors.muted, fontSize: 11 },
   sectionTitle: { color: colors.foreground, fontSize: 15, fontWeight: '800', paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: 8, letterSpacing: -0.2 },
-  noSessions: { marginHorizontal: spacing.md, padding: spacing.md, backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
+  noSessions: { marginHorizontal: spacing.md, padding: spacing.md, backgroundColor: colors.glass, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
   noSessionsText: { color: colors.muted, fontSize: 13 },
-  sessionCard: { flexDirection: 'row', alignItems: 'center', marginHorizontal: spacing.md, marginBottom: 8, backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+  sessionCard: { flexDirection: 'row', alignItems: 'center', marginHorizontal: spacing.md, marginBottom: 8, backgroundColor: colors.glass, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', ...shadow.sm },
   sessionColorBar: { width: 4, alignSelf: 'stretch' },
   sessionInfo: { flex: 1, padding: 14, gap: 3 },
   sessionSubject: { color: colors.foreground, fontSize: 14, fontWeight: '700' },
@@ -825,17 +825,17 @@ export default function PlannerScreen() {
 }
 
 const plStyles = (colors: any) => StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, backgroundColor: colors.card },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: spacing.md, marginTop: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: 12, borderWidth: 1, borderColor: colors.border, borderRadius: radius.xl, backgroundColor: colors.glass, ...shadow.sm },
   title: { color: colors.foreground, fontSize: 20, fontWeight: '800', letterSpacing: -0.5 },
   sub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   addBtn: { backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 14 },
   addBtnText: { color: colors.onPrimary, fontSize: 13, fontWeight: '800' },
   statsRow: { flexDirection: 'row', gap: 8, marginHorizontal: spacing.md, marginTop: spacing.md },
-  statCard: { flex: 1, backgroundColor: colors.card, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  statCard: { flex: 1, backgroundColor: colors.glass, borderRadius: 20, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border, ...shadow.sm },
   statValue: { color: colors.primary, fontSize: 22, fontWeight: '900' },
   statLabel: { color: colors.muted, fontSize: 10, marginTop: 2, fontWeight: '600' },
   sectionLabel: { color: colors.foreground, fontSize: 15, fontWeight: '800', paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: 8, letterSpacing: -0.2 },
-  dayActionCard: { marginHorizontal: spacing.md, marginBottom: spacing.md, backgroundColor: colors.card, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: 10 },
+  dayActionCard: { marginHorizontal: spacing.md, marginBottom: spacing.md, backgroundColor: colors.glass, borderRadius: radius.xxl, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: 10, ...shadow.sm },
   dayActionTitle: { color: colors.foreground, fontSize: 15, fontWeight: '800' },
   dayActionSub: { color: colors.muted, fontSize: 12, lineHeight: 18 },
   dayActionBtn: { alignSelf: 'flex-start', backgroundColor: colors.primary, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 8 },
@@ -852,7 +852,7 @@ const plStyles = (colors: any) => StyleSheet.create({
   emptySub: { color: colors.muted, fontSize: 13 },
   emptyBtn: { marginTop: 8, backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 16 },
   emptyBtnText: { color: colors.onPrimary, fontSize: 14, fontWeight: '800' },
-  planCard: { flexDirection: 'row', marginHorizontal: spacing.md, marginBottom: 10, backgroundColor: colors.card, borderRadius: 18, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+  planCard: { flexDirection: 'row', marginHorizontal: spacing.md, marginBottom: 10, backgroundColor: colors.glass, borderRadius: 26, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', ...shadow.sm },
   planAccent: { width: 5 },
   planBody: { flex: 1, padding: 14, gap: 8 },
   planRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

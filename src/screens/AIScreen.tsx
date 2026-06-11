@@ -5,7 +5,7 @@ import {
   Alert, Modal, ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { spacing, fontFamily } from '../lib/theme';
+import { radius, shadow, spacing, fontFamily } from '../lib/theme';
 import { callEdgeFunction, supabase } from '../lib/supabase';
 import { getAIConversations, saveAIConversation, clearAIConversations, AIConversationEntry } from '../services/ai';
 import { useAuth } from '../contexts/AuthContext';
@@ -277,19 +277,19 @@ const PdfLibrarySheet = ({
 
 const sheetStyles = (colors: any) => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: colors.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingBottom: 40, maxHeight: '80%' },
+  sheet: { backgroundColor: colors.glass, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingBottom: 40, maxHeight: '80%', borderWidth: 1, borderColor: colors.border, ...shadow.floating },
   handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginTop: 10, marginBottom: 8 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
   modeIcon: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   title: { color: colors.foreground, fontSize: 15, fontWeight: '800' },
   sub: { color: colors.muted, fontSize: 12, marginTop: 2 },
-  closeBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.input, alignItems: 'center', justifyContent: 'center' },
+  closeBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   closeBtnText: { color: colors.muted, fontSize: 13, fontWeight: '600' },
   pdfList: { paddingHorizontal: 16, paddingTop: 12, maxHeight: 300 },
   emptyList: { alignItems: 'center', paddingVertical: 32 },
   emptyText: { color: colors.foreground, fontSize: 14, fontWeight: '600' },
   emptySubText: { color: colors.muted, fontSize: 12, marginTop: 4 },
-  pdfRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border, marginBottom: 8 },
+  pdfRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 22, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border, marginBottom: 8 },
   checkbox: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   checkmark: { color: '#fff', fontSize: 12, fontWeight: '900' },
   pdfIconWrap: { width: 38, height: 38, borderRadius: 10, backgroundColor: '#ef4444' + '18', borderWidth: 1, borderColor: '#ef4444' + '30', alignItems: 'center', justifyContent: 'center' },
@@ -334,7 +334,7 @@ const EndSessionModal = ({ visible, mode, onEnd, onContinue }: { visible: boolea
 
 const endModalStyles = (colors: any) => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  card: { backgroundColor: colors.card, borderRadius: 28, padding: 24, width: '100%', maxWidth: 320, alignItems: 'center', gap: 8, borderWidth: 1, borderColor: colors.border },
+  card: { backgroundColor: colors.glass, borderRadius: 32, padding: 24, width: '100%', maxWidth: 320, alignItems: 'center', gap: 8, borderWidth: 1, borderColor: colors.border, ...shadow.floating },
   icon: { width: 64, height: 64, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   title: { color: colors.foreground, fontSize: 18, fontWeight: '900', textAlign: 'center' },
   sub: { color: colors.muted, fontSize: 13, textAlign: 'center', lineHeight: 20 },
@@ -675,40 +675,40 @@ export default function AIScreen() {
 
 const styles = (colors: any) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, backgroundColor: colors.card },
-  title: { color: colors.foreground, fontSize: 17, fontWeight: '800', fontFamily: fontFamily.display },
+  header: { marginHorizontal: spacing.md, marginTop: spacing.sm, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, borderRadius: radius.xl, ...shadow.sm },
+  title: { color: colors.foreground, fontSize: 20, fontWeight: '900', fontFamily: fontFamily.display },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
   statusDot: { width: 6, height: 6, borderRadius: 3 },
   statusText: { color: colors.muted, fontSize: 11, fontWeight: '500', fontFamily: fontFamily.sans },
-  clearBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: colors.border },
+  clearBtn: { paddingHorizontal: 13, paddingVertical: 7, borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input },
   clearBtnText: { color: colors.muted, fontSize: 11, fontWeight: '600', fontFamily: fontFamily.sans },
   list: { padding: spacing.md, gap: 12, paddingBottom: spacing.lg },
   msgRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
   msgRowUser: { flexDirection: 'row-reverse' },
-  avatar: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
+  avatar: { width: 32, height: 32, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
   avatarUser: { backgroundColor: colors.primary, borderColor: colors.primary },
   avatarAI: { backgroundColor: colors.card },
   avatarText: { fontSize: 11, fontWeight: '900', color: colors.onPrimary, fontFamily: fontFamily.sans },
-  bubble: { flex: 1, borderRadius: 20, padding: 14, maxWidth: '84%' },
-  bubbleUser: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
-  bubbleAI: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 4 },
+  bubble: { flex: 1, borderRadius: 26, padding: 15, maxWidth: '84%', ...shadow.sm },
+  bubbleUser: { backgroundColor: colors.primary, borderBottomRightRadius: 8 },
+  bubbleAI: { backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 8 },
   bubbleText: { color: colors.foreground, fontSize: 15, lineHeight: 24, fontFamily: fontFamily.reading },
   bubbleTextUser: { color: colors.onPrimary, fontWeight: '700' },
   codeBlock: { marginTop: 8, marginBottom: 8, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(0,0,0,0.55)', overflow: 'hidden' },
   codeLang: { paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, color: colors.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: fontFamily.sans },
   codeText: { padding: 12, color: '#f5f5f5', fontSize: 12, lineHeight: 19, fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }) },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary },
-  sessionBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, backgroundColor: colors.card },
+  sessionBar: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: spacing.md, marginBottom: spacing.xs, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: colors.border, borderRadius: radius.full, backgroundColor: colors.glass },
   sessionDot: { width: 6, height: 6, borderRadius: 3 },
   sessionText: { flex: 1, fontSize: 11, fontWeight: '600', fontFamily: fontFamily.sans },
   endBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
   endBtnText: { fontSize: 11, fontWeight: '700', fontFamily: fontFamily.sans },
-  inputWrap: { width: '100%', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, backgroundColor: colors.card },
+  inputWrap: { width: '100%', backgroundColor: 'transparent' },
   modeBar: { flexDirection: 'row', gap: 8, paddingHorizontal: spacing.md, paddingTop: 10, paddingBottom: 8 },
-  modeBtn: { flex: 1, minHeight: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border },
+  modeBtn: { flex: 1, minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.border, ...shadow.sm },
   modeBtnText: { color: colors.muted, fontSize: 12, fontWeight: '700', fontFamily: fontFamily.sans },
   inputBar: { width: '100%', flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: spacing.md, paddingBottom: 8 },
-  input: { flex: 1, backgroundColor: colors.input, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, color: colors.foreground, fontSize: 15, maxHeight: 112, borderWidth: 1, borderColor: colors.border, fontFamily: fontFamily.reading },
-  sendBtn: { minWidth: 58, height: 44, paddingHorizontal: 14, borderRadius: 999, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  input: { flex: 1, backgroundColor: colors.glass, borderRadius: 26, paddingHorizontal: 16, paddingVertical: 13, color: colors.foreground, fontSize: 15, maxHeight: 112, borderWidth: 1, borderColor: colors.border, fontFamily: fontFamily.reading, ...shadow.sm },
+  sendBtn: { minWidth: 58, height: 46, paddingHorizontal: 14, borderRadius: 999, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', ...shadow.sm },
   sendBtnText: { color: colors.onPrimary, fontSize: 13, fontWeight: '900', fontFamily: fontFamily.sans },
 });

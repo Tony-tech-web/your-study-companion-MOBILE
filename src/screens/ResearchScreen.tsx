@@ -84,8 +84,8 @@ Focus on what this source covers, its relevance, and how a student could use it.
   return (
     <SafeAreaView style={s.root} edges={['top']}>
       <View style={s.header}>
-        <Text style={s.title}>Research</Text>
-        <Text style={s.subtitle}>Powered by Serper + AI</Text>
+        <Text style={s.title}>Research Explorer</Text>
+        <Text style={s.subtitle}>Discover, analyze, and synthesize academic literature.</Text>
       </View>
 
       {/* Search bar */}
@@ -116,7 +116,7 @@ Focus on what this source covers, its relevance, and how a student could use it.
         {/* AI Insights */}
         {insights && (
           <View style={s.insightsCard}>
-            <Text style={s.insightsTitle}> AI Summary</Text>
+            <Text style={s.insightsTitle}>AI Summary</Text>
             {insights.insights && <Text style={s.insightsText}>{insights.insights}</Text>}
             {insights.gaps.length > 0 && (
               <>
@@ -159,7 +159,7 @@ Focus on what this source covers, its relevance, and how a student could use it.
             {/* AI description panel */}
             {selected?.id === r.id && (
               <View style={s.descPanel}>
-                <Text style={s.descTitle}> AI Description</Text>
+                <Text style={s.descTitle}>AI Description</Text>
                 {descLoading
                   ? <ActivityIndicator color={colors.primary} style={{ padding: spacing.md }} />
                   : <Text style={s.descText}>{description}</Text>}
@@ -176,7 +176,7 @@ Focus on what this source covers, its relevance, and how a student could use it.
         {/* History */}
         {results.length === 0 && !searching && (
           <>
-            <Text style={s.sectionTitle}> Recent Searches</Text>
+            <Text style={s.sectionTitle}>Recent Searches</Text>
             {loadingHistory
               ? <ActivityIndicator color={colors.primary} />
               : history.length === 0
@@ -201,23 +201,23 @@ Focus on what this source covers, its relevance, and how a student could use it.
 
 const styles = (colors: any) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  header: { padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.card },
-  title: { color: colors.foreground, fontSize: typography.lg, fontWeight: '800' },
-  subtitle: { color: colors.muted, fontSize: typography.xs, marginTop: 2 },
-  searchBar: { flexDirection: 'row', gap: spacing.sm, padding: spacing.md, backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border },
-  input: { flex: 1, backgroundColor: colors.background, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, color: colors.foreground, fontSize: typography.sm, borderWidth: 1, borderColor: colors.border },
-  searchBtn: { backgroundColor: colors.primary, borderRadius: radius.md, paddingHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center' },
+  header: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm, backgroundColor: colors.background },
+  title: { color: colors.foreground, fontSize: 28, lineHeight: 34, fontWeight: '900' },
+  subtitle: { color: colors.muted, fontSize: typography.sm, lineHeight: 20, marginTop: 4 },
+  searchBar: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, backgroundColor: colors.background },
+  input: { flex: 1, backgroundColor: colors.surface, borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, color: colors.foreground, fontSize: typography.sm, borderWidth: 1, borderColor: colors.border },
+  searchBtn: { width: 48, height: 48, backgroundColor: colors.primary, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
   searchBtnDisabled: { opacity: 0.4 },
   searchBtnText: { color: colors.onPrimary, fontWeight: '700', fontSize: typography.sm },
-  modeRow: { flexDirection: 'row', gap: spacing.sm, padding: spacing.sm, backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border },
-  modeBtn: { flex: 1, paddingVertical: spacing.sm, borderRadius: radius.md, backgroundColor: colors.background, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  modeRow: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.md, backgroundColor: colors.background },
+  modeBtn: { flex: 1, paddingVertical: spacing.sm, borderRadius: radius.full, backgroundColor: colors.surface, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   modeBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   modeBtnText: { color: colors.muted, fontSize: typography.xs, fontWeight: '600' },
   modeBtnTextActive: { color: colors.onPrimary },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: 130 },
   errorCard: { backgroundColor: colors.red + '15', borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.red + '30' },
   errorText: { color: colors.red, fontSize: typography.sm },
-  insightsCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.primary + '40', gap: spacing.sm },
+  insightsCard: { backgroundColor: colors.glass, borderRadius: 28, padding: spacing.lg, borderWidth: 1, borderColor: colors.primary + '40', gap: spacing.sm },
   insightsTitle: { color: colors.foreground, fontSize: typography.sm, fontWeight: '700' },
   insightsText: { color: colors.muted, fontSize: typography.xs, lineHeight: 18 },
   insightsSubtitle: { color: colors.foreground, fontSize: typography.xs, fontWeight: '600', marginTop: spacing.xs },
@@ -225,7 +225,7 @@ const styles = (colors: any) => StyleSheet.create({
   tag: { backgroundColor: colors.background, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: colors.border },
   tagTopic: { borderColor: colors.primary + '50' },
   tagText: { color: colors.muted, fontSize: 11 },
-  resultCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border, gap: spacing.sm },
+  resultCard: { backgroundColor: colors.glass, borderRadius: 24, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, gap: spacing.sm },
   resultCardSelected: { borderColor: colors.primary },
   resultHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   resultTitle: { color: colors.foreground, fontSize: typography.sm, fontWeight: '600', flex: 1, lineHeight: 20 },
@@ -237,7 +237,7 @@ const styles = (colors: any) => StyleSheet.create({
   sourceBadgeText: { color: colors.muted, fontSize: 11 },
   sourceBadgeTextGH: { color: colors.green },
   tapHint: { color: colors.muted, fontSize: 10, opacity: 0.5 },
-  descPanel: { backgroundColor: colors.background, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.primary + '30', gap: spacing.sm, marginTop: spacing.sm },
+  descPanel: { backgroundColor: colors.surface, borderRadius: 18, padding: spacing.md, borderWidth: 1, borderColor: colors.primary + '30', gap: spacing.sm, marginTop: spacing.sm },
   descTitle: { color: colors.foreground, fontSize: typography.xs, fontWeight: '700' },
   descText: { color: colors.muted, fontSize: typography.xs, lineHeight: 18 },
   copyBtn: { backgroundColor: colors.primary, borderRadius: radius.sm, padding: spacing.sm, alignItems: 'center' },
@@ -245,7 +245,7 @@ const styles = (colors: any) => StyleSheet.create({
   sectionTitle: { color: colors.foreground, fontSize: typography.base, fontWeight: '700' },
   empty: { alignItems: 'center', padding: spacing.xl },
   emptyText: { color: colors.muted, fontSize: typography.sm },
-  historyRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
+  historyRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.glass, borderRadius: 24, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
   historyTitle: { color: colors.foreground, fontSize: typography.sm, fontWeight: '600' },
   historySub: { color: colors.muted, fontSize: typography.xs, marginTop: 2 },
   historyDelete: { fontSize: 16 },

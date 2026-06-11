@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { radius, spacing, typography } from '../lib/theme';
+import { radius, shadow, spacing, typography } from '../lib/theme';
 import { useMobileTheme } from '../contexts/ThemeContext';
 import { BillingPlan, getBillingPlans, getBillingStatus, startBillingCheckout } from '../services/billing';
 
@@ -217,20 +217,20 @@ const priceRowStyles = StyleSheet.create({
 const styles = (colors: any, theme: string) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   modalBackdrop: { flex: 1, justifyContent: 'center', padding: spacing.lg, backgroundColor: 'rgba(0,0,0,0.72)' },
-  reviewCard: { borderRadius: 30, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, padding: spacing.lg, gap: spacing.md },
+  reviewCard: { borderRadius: 34, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, padding: spacing.lg, gap: spacing.md, ...shadow.floating },
   reviewTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   reviewEyebrow: { color: colors.muted, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.4 },
   reviewTitle: { color: colors.foreground, fontSize: 25, fontWeight: '900', marginTop: 3 },
   reviewSub: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 4 },
   closeBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, alignItems: 'center', justifyContent: 'center' },
   closeText: { color: colors.foreground, fontSize: 22, fontWeight: '700', marginTop: -2 },
-  breakdownBox: { borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, padding: spacing.md },
+  breakdownBox: { borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, padding: spacing.md, ...shadow.sm },
   divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.xs },
   reviewGrid: { flexDirection: 'row', gap: spacing.sm },
-  reviewMetric: { flex: 1, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, padding: spacing.md },
+  reviewMetric: { flex: 1, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, padding: spacing.md, ...shadow.sm },
   metricLabel: { color: colors.muted, fontSize: 10, fontWeight: '900', textTransform: 'uppercase' },
   metricValue: { color: colors.foreground, fontSize: 17, fontWeight: '900', marginTop: 4 },
-  providerBox: { borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, padding: spacing.md },
+  providerBox: { borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, padding: spacing.md, ...shadow.sm },
   providerTitle: { color: colors.muted, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginBottom: spacing.xs },
   reviewAction: { height: 52, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
   reviewActionText: { color: colors.onPrimary, fontSize: typography.sm, fontWeight: '900' },
@@ -239,18 +239,19 @@ const styles = (colors: any, theme: string) => StyleSheet.create({
   eyebrow: { color: colors.muted, fontSize: typography.xs, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
   title: { color: colors.foreground, fontSize: 31, fontWeight: '900' },
   sub: { color: colors.muted, fontSize: typography.sm, lineHeight: 20 },
-  currentCard: { borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, padding: spacing.md },
+  currentCard: { borderRadius: radius.xxl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, padding: spacing.md, ...shadow.sm },
   currentLabel: { color: colors.muted, fontSize: typography.xs, fontWeight: '900', textTransform: 'uppercase' },
   currentName: { color: colors.foreground, fontSize: typography.lg, fontWeight: '900', marginTop: 4 },
   loader: { borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, padding: spacing.xl },
   planList: { gap: spacing.md },
   planCard: {
     minHeight: 330,
-    borderRadius: 30,
+    borderRadius: 32,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.92)' : colors.card,
+    backgroundColor: colors.glass,
     padding: spacing.lg,
+    ...shadow.md,
   },
   planCardFeatured: {
     borderColor: theme === 'light' ? 'rgba(17,17,17,0.22)' : colors.border,
