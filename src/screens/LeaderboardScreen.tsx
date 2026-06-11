@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Image, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
-import { spacing, radius, typography } from '../lib/theme';
+import { spacing, radius, typography, shadow } from '../lib/theme';
 import { getLeaderboard, LeaderboardResult } from '../services/leaderboard';
 import { useAuth } from '../contexts/AuthContext';
 import { useMobileTheme } from '../contexts/ThemeContext';
@@ -34,8 +34,8 @@ export default function LeaderboardScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={{ padding: 20, gap: 12 }}>
         <View style={{ width: 140, height: 22, borderRadius: 6, backgroundColor: colors.border, opacity: 0.5 }} />
-        <View style={{ height: 80, borderRadius: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }} />
-        <View style={{ height: 140, borderRadius: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }} />
+        <View style={{ height: 80, borderRadius: 28, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.border }} />
+        <View style={{ height: 140, borderRadius: 28, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.border }} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
             <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.border, opacity: 0.35 }} />
             <View style={{ flex: 1, gap: 6 }}>
@@ -181,7 +181,7 @@ const styles = (colors: any) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: 140 },
   center: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  header: { gap: 2 },
+  header: { gap: 2, borderRadius: radius.xxl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, padding: spacing.md, ...shadow.sm },
   eyebrow: { color: colors.muted, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 },
   title: { color: colors.foreground, fontSize: 30, fontWeight: '900' },
   subtitle: { color: colors.muted, fontSize: 12, fontWeight: '700' },
@@ -197,7 +197,7 @@ const styles = (colors: any) => StyleSheet.create({
   medalText: { color: "#fff", fontSize: 11, fontWeight: "900" },
   retryBtn: { backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.md },
   retryBtnText: { color: colors.onPrimary, fontWeight: '700' },
-  myRankCard: { minHeight: 260, backgroundColor: colors.card, borderRadius: 32, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+  myRankCard: { minHeight: 260, backgroundColor: colors.glass, borderRadius: 32, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', ...shadow.md },
   profileCover: { height: 84, backgroundColor: colors.input, borderBottomWidth: 1, borderBottomColor: colors.border },
   myRankBody: { alignItems: 'center', padding: spacing.md, paddingTop: 0 },
   profileAvatar: { width: 86, height: 86, borderRadius: 34, marginTop: -43, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary, borderWidth: 4, borderColor: colors.background, overflow: 'hidden' },
@@ -209,7 +209,7 @@ const styles = (colors: any) => StyleSheet.create({
   profileStat: { flex: 1, minHeight: 64, borderRadius: radius.lg, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   profileStatValue: { color: colors.foreground, fontSize: 17, fontWeight: '900' },
   profileStatLabel: { color: colors.muted, fontSize: 10, fontWeight: '900', marginTop: 2, textTransform: 'uppercase' },
-  podium: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: spacing.sm, padding: spacing.md, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card },
+  podium: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: spacing.sm, padding: spacing.md, borderRadius: radius.xxl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, ...shadow.sm },
   podiumItem: { alignItems: 'center', flex: 1 },
   podiumFirst: {},
   podiumSecond: {},
@@ -221,7 +221,7 @@ const styles = (colors: any) => StyleSheet.create({
   podiumXp: { color: colors.primary, fontSize: 10, fontWeight: '600', marginBottom: 4 },
   podiumBar: { width: '100%', backgroundColor: colors.input, borderTopLeftRadius: 12, borderTopRightRadius: 12, borderWidth: 1, borderColor: colors.border },
   sectionTitle: { color: colors.foreground, fontSize: 14, fontWeight: '900', marginTop: spacing.xs },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.glass, borderRadius: radius.xl, padding: spacing.md, borderWidth: 1, borderColor: colors.border, ...shadow.sm },
   rowMe: { borderColor: colors.primary },
   rowRank: { color: colors.muted, fontSize: typography.sm, fontWeight: '700', width: 32 },
   rowAvatar: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: colors.border },

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, RefreshControl } from 'react-native';
-import { spacing, radius } from '../lib/theme';
+import { spacing, radius, shadow } from '../lib/theme';
 import { getNews } from '../services/news';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMobileTheme } from '../contexts/ThemeContext';
@@ -89,18 +89,18 @@ export default function NewsScreen() {
 
 const styles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingTop: 8, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: spacing.md, marginTop: spacing.sm, padding: spacing.md, borderRadius: radius.xxl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, ...shadow.sm },
   title: { fontSize: 20, fontWeight: '800', color: colors.foreground, letterSpacing: -0.5 },
   sub: { fontSize: 12, color: colors.muted, marginTop: 2 },
   liveBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(16,185,129,0.1)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99 },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#10b981' },
   liveText: { fontSize: 11, fontWeight: '600', color: '#10b981' },
   categoryRow: { paddingHorizontal: spacing.md, paddingVertical: 10, gap: 8 },
-  catBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card },
+  catBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass },
   catBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   catText: { fontSize: 12, fontWeight: '600', color: colors.muted },
   catTextActive: { color: '#fff' },
-  card: { backgroundColor: colors.card, borderRadius: radius.xl, overflow: 'hidden', borderWidth: 1, borderColor: colors.border },
+  card: { backgroundColor: colors.glass, borderRadius: radius.xxl, overflow: 'hidden', borderWidth: 1, borderColor: colors.border, ...shadow.sm },
   cardImg: { width: '100%', height: 160, backgroundColor: colors.input },
   cardBody: { padding: 14, gap: 6 },
   catTag: { alignSelf: 'flex-start', backgroundColor: colors.primary + '18', borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 3 },
@@ -109,7 +109,7 @@ const styles = (colors: any) => StyleSheet.create({
   cardExcerpt: { fontSize: 12, color: colors.muted, lineHeight: 18 },
   cardDate: { fontSize: 11, color: colors.muted, opacity: 0.6 },
   // Skeleton
-  skeletonCard: { backgroundColor: colors.card, borderRadius: radius.xl, overflow: 'hidden', borderWidth: 1, borderColor: colors.border },
+  skeletonCard: { backgroundColor: colors.glass, borderRadius: radius.xxl, overflow: 'hidden', borderWidth: 1, borderColor: colors.border },
   skeletonImg: { width: '100%', height: 140, backgroundColor: colors.border },
   skeletonBody: { padding: 14, gap: 4 },
   skeletonLine: { backgroundColor: colors.border, borderRadius: 4, opacity: 0.5 },

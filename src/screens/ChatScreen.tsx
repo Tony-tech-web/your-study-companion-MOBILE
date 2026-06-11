@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   FlatList, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
-import { spacing, radius } from '../lib/theme';
+import { spacing, radius, shadow } from '../lib/theme';
 import { getChatMessages, sendChatMessage, ChatMessage } from '../services/chat';
 import { useAuth } from '../contexts/AuthContext';
 import { useMobileTheme } from '../contexts/ThemeContext';
@@ -89,7 +89,7 @@ export default function ChatScreen() {
         <View style={s.headerDot} />
         <View>
           <Text style={s.headerTitle}>Global Study Hub</Text>
-          <Text style={s.headerSub}>Campus channel · realtime active</Text>
+          <Text style={s.headerSub}>Campus channel - realtime active</Text>
         </View>
       </View>
 
@@ -126,7 +126,7 @@ export default function ChatScreen() {
             placeholderTextColor={colors.muted} style={s.input}
             onSubmitEditing={handleSend} returnKeyType="send" />
           <TouchableOpacity onPress={handleSend} disabled={sending || !input.trim()} style={[s.sendBtn, (!input.trim() || sending) && { opacity: 0.3 }]}>
-            {sending ? <ActivityIndicator color="#fff" size="small" /> : <Text style={s.sendIcon}>↑</Text>}
+            {sending ? <ActivityIndicator color={colors.onPrimary} size="small" /> : <Text style={s.sendIcon}>Send</Text>}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -137,7 +137,7 @@ export default function ChatScreen() {
 const styles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: spacing.md, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, backgroundColor: colors.card },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: spacing.md, marginTop: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: 12, borderWidth: 1, borderColor: colors.border, borderRadius: radius.xl, backgroundColor: colors.glass, ...shadow.sm },
   headerDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#10b981' },
   headerTitle: { fontSize: 14, fontWeight: '700', color: colors.foreground },
   headerSub: { fontSize: 11, color: colors.muted, marginTop: 1 },
@@ -145,16 +145,16 @@ const styles = (colors: any) => StyleSheet.create({
   emptyText: { fontSize: 13, color: colors.muted, opacity: 0.5 },
   msgRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   msgRowMe: { flexDirection: 'row-reverse' },
-  avatar: { width: 28, height: 28, borderRadius: 8, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  avatar: { width: 30, height: 30, borderRadius: 13, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   avatarMe: { backgroundColor: colors.primary, borderColor: colors.primary },
   avatarText: { fontSize: 10, fontWeight: '800', color: colors.muted },
-  bubble: { maxWidth: '75%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, gap: 3 },
-  bubbleThem: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 4 },
-  bubbleMe: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
+  bubble: { maxWidth: '75%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 24, gap: 3, ...shadow.sm },
+  bubbleThem: { backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 8 },
+  bubbleMe: { backgroundColor: colors.primary, borderBottomRightRadius: 8 },
   bubbleText: { fontSize: 14, color: colors.foreground, lineHeight: 20 },
   time: { fontSize: 10, color: colors.muted, marginTop: 2 },
-  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: spacing.md, paddingVertical: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, backgroundColor: colors.card },
-  input: { flex: 1, backgroundColor: colors.input, borderRadius: radius.xl, paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: colors.foreground, borderWidth: 1, borderColor: colors.border },
-  sendBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  sendIcon: { color: '#fff', fontSize: 18, fontWeight: '700', lineHeight: 22 },
+  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: spacing.md, paddingVertical: 12, backgroundColor: 'transparent' },
+  input: { flex: 1, backgroundColor: colors.glass, borderRadius: radius.xl, paddingHorizontal: 16, paddingVertical: 12, fontSize: 14, color: colors.foreground, borderWidth: 1, borderColor: colors.border, ...shadow.sm },
+  sendBtn: { minWidth: 58, height: 42, paddingHorizontal: 12, borderRadius: radius.full, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', ...shadow.sm },
+  sendIcon: { color: colors.onPrimary, fontSize: 12, fontWeight: '900' },
 });

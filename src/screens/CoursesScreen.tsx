@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   Alert, RefreshControl, ActivityIndicator,
 } from 'react-native';
-import { spacing, radius, typography } from '../lib/theme';
+import { spacing, radius, typography, shadow } from '../lib/theme';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -139,16 +139,16 @@ export default function CoursesScreen() {
 
 const styles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, backgroundColor: colors.card },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: spacing.md, marginTop: spacing.sm, padding: spacing.md, borderRadius: radius.xxl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, ...shadow.sm },
   title: { fontSize: typography.lg, fontWeight: '800', color: colors.foreground, letterSpacing: -0.3 },
   sub: { fontSize: typography.xs, color: colors.muted, marginTop: 2 },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: 120 },
-  uploadHint: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
+  uploadHint: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.glass, borderRadius: radius.xxl, padding: spacing.md, borderWidth: 1, borderColor: colors.border, ...shadow.sm },
   uploadIconWrap: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary + '20', borderWidth: 1, borderColor: colors.primary + '40', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   uploadIconText: { color: colors.primary, fontSize: 24, fontWeight: '700', lineHeight: 28 },
   uploadTitle: { color: colors.foreground, fontSize: typography.sm, fontWeight: '700', marginBottom: 3 },
   uploadDesc: { color: colors.muted, fontSize: typography.xs, lineHeight: 16 },
-  aiHint: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.primary + '10', borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.primary + '25' },
+  aiHint: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.primary + '10', borderRadius: radius.xl, padding: spacing.md, borderWidth: 1, borderColor: colors.primary + '25' },
   aiHintDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary, flexShrink: 0 },
   aiHintText: { color: colors.primary, fontSize: typography.xs, flex: 1, lineHeight: 17, fontWeight: '500' },
   empty: { alignItems: 'center', paddingVertical: spacing.xxl, gap: spacing.md },
@@ -156,7 +156,7 @@ const styles = (colors: any) => StyleSheet.create({
   emptyIconChar: { color: '#fff', fontSize: typography['2xl'], fontWeight: '900' },
   emptyTitle: { color: colors.foreground, fontSize: typography.lg, fontWeight: '700' },
   emptyDesc: { color: colors.muted, fontSize: typography.sm, textAlign: 'center', maxWidth: 260, lineHeight: 20 },
-  pdfCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.card, borderRadius: radius.xl, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
+  pdfCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.glass, borderRadius: radius.xxl, padding: spacing.md, borderWidth: 1, borderColor: colors.border, ...shadow.sm },
   pdfIcon: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: '#ef4444' + '18', borderWidth: 1, borderColor: '#ef4444' + '30', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   pdfIconText: { color: '#ef4444', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
   pdfInfo: { flex: 1 },

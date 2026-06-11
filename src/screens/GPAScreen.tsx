@@ -4,7 +4,7 @@ import {
   TextInput, Modal, ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { spacing, radius, typography } from '../lib/theme';
+import { spacing, radius, typography, shadow } from '../lib/theme';
 import { getGPARecords, createGPARecord, deleteGPARecord } from '../services/gpa';
 import { GPARecord } from '../types';
 import { useMobileTheme } from '../contexts/ThemeContext';
@@ -214,13 +214,13 @@ export default function GPAScreen() {
 
 const styles = (colors: any) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.card },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: spacing.md, marginTop: spacing.sm, padding: spacing.md, borderRadius: radius.xxl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, ...shadow.sm },
   title: { color: colors.foreground, fontSize: typography.lg, fontWeight: '800' },
   addBtn: { backgroundColor: colors.primary, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.md },
   addBtnText: { color: colors.onPrimary, fontSize: typography.sm, fontWeight: '700' },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: 120 },
   summaryRow: { flexDirection: 'row', gap: spacing.sm },
-  summaryCard: { flex: 1, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  summaryCard: { flex: 1, backgroundColor: colors.glass, borderRadius: radius.xl, padding: spacing.md, alignItems: 'center', borderWidth: 1, borderColor: colors.border, ...shadow.sm },
   summaryValue: { color: colors.primary, fontSize: typography['2xl'], fontWeight: '800' },
   summaryLabel: { color: colors.muted, fontSize: typography.xs, marginTop: 2 },
   summaryClass: { color: colors.foreground, fontSize: 10, fontWeight: '600', marginTop: 2 },
@@ -234,7 +234,7 @@ const styles = (colors: any) => StyleSheet.create({
   emptyText: { color: colors.muted, fontSize: typography.sm, textAlign: 'center' },
   emptyBtn: { backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.lg },
   emptyBtnText: { color: colors.onPrimary, fontWeight: '700', fontSize: typography.sm },
-  recordCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border, gap: spacing.sm },
+  recordCard: { backgroundColor: colors.glass, borderRadius: radius.xxl, padding: spacing.md, borderWidth: 1, borderColor: colors.border, gap: spacing.sm, ...shadow.sm },
   recordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   recordSemester: { color: colors.foreground, fontSize: typography.base, fontWeight: '700' },
   recordClass: { color: colors.muted, fontSize: typography.xs, marginTop: 2 },
@@ -246,14 +246,14 @@ const styles = (colors: any) => StyleSheet.create({
   gpaTrack: { height: 4, backgroundColor: colors.border, borderRadius: radius.full, overflow: 'hidden' },
   gpaFill: { height: '100%', borderRadius: radius.full },
   modal: { flex: 1, backgroundColor: colors.background },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.card },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', margin: spacing.md, padding: spacing.md, borderRadius: radius.xxl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass, ...shadow.sm },
   modalTitle: { color: colors.foreground, fontSize: typography.xl, fontWeight: '800' },
   modalClose: { color: colors.primary, fontSize: typography.base, fontWeight: '600' },
   modalContent: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl },
   formField: { gap: 6 },
   formLabel: { color: colors.muted, fontSize: typography.xs, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
-  formInput: { backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, color: colors.foreground, fontSize: typography.base, borderWidth: 1, borderColor: colors.border },
-  previewBadge: { backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
+  formInput: { backgroundColor: colors.glass, borderRadius: radius.xl, padding: spacing.md, color: colors.foreground, fontSize: typography.base, borderWidth: 1, borderColor: colors.border },
+  previewBadge: { backgroundColor: colors.glass, borderRadius: radius.xl, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
   previewText: { color: colors.muted, fontSize: typography.xs },
   saveBtn: { backgroundColor: colors.primary, borderRadius: radius.md, padding: spacing.md, alignItems: 'center', marginTop: spacing.sm },
   saveBtnText: { color: colors.onPrimary, fontSize: typography.base, fontWeight: '700' },
