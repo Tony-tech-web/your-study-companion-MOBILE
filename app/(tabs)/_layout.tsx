@@ -34,18 +34,18 @@ const icons: Record<RouteName | 'plus', string> = {
 
 const primaryRoutes: Array<{ name: RouteName; label: string }> = [
   { name: 'index', label: 'Focus' },
-  { name: 'planner', label: 'Planner' },
   { name: 'ai', label: 'AI' },
-  { name: 'courses', label: 'Library' },
+  { name: 'news', label: 'News' },
+  { name: 'settings', label: 'Settings' },
 ];
 
 const moreRoutes: Array<{ name: RouteName; label: string; detail: string }> = [
   { name: 'planner', label: 'Planner', detail: 'Study schedule' },
-  { name: 'gpa', label: 'GPA', detail: 'Academic tracker' },
   { name: 'research', label: 'Research', detail: 'AI search' },
   { name: 'courses', label: 'Courses', detail: 'PDF library' },
   { name: 'chat', label: 'Chat', detail: 'Campus messages' },
   { name: 'leaderboard', label: 'Leaderboard', detail: 'XP rankings' },
+  { name: 'gpa', label: 'GPA', detail: 'Academic tracker' },
   { name: 'billing', label: 'Billing', detail: 'Plans and payments' },
 ];
 
@@ -161,7 +161,20 @@ function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
 
       <View style={[s.barWrap, { paddingBottom: Math.max(insets.bottom, 8) }]} pointerEvents="box-none">
         <View style={s.pill}>
-          {primaryRoutes.map(renderTab)}
+          {primaryRoutes.slice(0, 2).map(renderTab)}
+          <TouchableOpacity
+            onPress={() => setOpen(true)}
+            activeOpacity={0.78}
+            style={s.plusSlot}
+            accessibilityRole="button"
+            accessibilityLabel="Open more Orbit tools"
+            accessibilityState={{ expanded: open, selected: moreActive }}
+          >
+            <View style={[s.plusButton, (open || moreActive) && s.plusButtonActive]}>
+              <Icon name="plus" color={(open || moreActive) ? colors.onPrimary : colors.foreground} size={22} strokeWidth={2.3} />
+            </View>
+          </TouchableOpacity>
+          {primaryRoutes.slice(2).map(renderTab)}
         </View>
       </View>
     </>
