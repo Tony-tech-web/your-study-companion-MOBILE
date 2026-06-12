@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getCurrentSession } from '../lib/supabase';
+import { clearStoredAuthSession, getCurrentSession, isInvalidRefreshToken } from '../lib/supabase';
 
 const API_BASE_URL = (process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
 
@@ -12,5 +12,15 @@ api.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+api.interceptors.response.use(
+  response => response,
+  async (error) => {
+    if (error?.response?.status === 401 || isInvalidRefreshToken(error)) {
+      await clearStoredAuthSession();
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;

@@ -1,5 +1,5 @@
 import 'react-native-url-polyfill/auto';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, Session } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, Platform } from 'react-native';
 import * as Linking from 'expo-linking';
@@ -16,19 +16,50 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+const projectRef = (() => {
+  try {
+    return new URL(supabaseUrl).hostname.split('.')[0];
+  } catch {
+    return '';
+  }
+})();
+
 export const isInvalidRefreshToken = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error || '');
   const lower = message.toLowerCase();
   return lower.includes('invalid refresh token') || lower.includes('refresh token not found');
 };
 
+export const setRealtimeAuthFromSession = (session: Session | null) => {
+  if (!session?.access_token) return;
+  try {
+    supabase.realtime.setAuth(session.access_token);
+  } catch (error) {
+    console.warn('Realtime auth sync failed:', error);
+  }
+};
+
+export const clearStoredAuthSession = async () => {
+  await supabase.auth.signOut({ scope: 'local' }).catch(() => null);
+  const keys = await AsyncStorage.getAllKeys().catch(() => []);
+  const authKeys = keys.filter((key) =>
+    key === `sb-${projectRef}-auth-token` ||
+    key.includes('supabase.auth.token') ||
+    /^sb-.+-auth-token$/.test(key)
+  );
+  if (authKeys.length) {
+    await AsyncStorage.multiRemove(authKeys).catch(() => null);
+  }
+};
+
 export const getCurrentSession = async () => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
+    setRealtimeAuthFromSession(session);
     return session;
   } catch (error) {
     if (isInvalidRefreshToken(error)) {
-      await supabase.auth.signOut({ scope: 'local' }).catch(() => null);
+      await clearStoredAuthSession();
       return null;
     }
     throw error;
@@ -64,22 +95,39 @@ export async function handleDeepLink(url: string) {
       searchStr.split('&').forEach((pair) => {
         const [key, val] = pair.split('=');
         if (key && val) {
-          params[key] = decodeURIComponent(val);
+          params[decodeURIComponent(key)] = decodeURIComponent(val.replace(/\+/g, ' '));
         }
       });
     }
+
+    const parsed = Linking.parse(url);
+    Object.entries(parsed.queryParams || {}).forEach(([key, value]) => {
+      if (typeof value === 'string') params[key] = value;
+      if (Array.isArray(value) && typeof value[0] === 'string') params[key] = value[0];
+    });
     
-    const { access_token, refresh_token, code } = params;
+    const { access_token, refresh_token, code, error, error_description } = params;
+    if (error || error_description) {
+      throw new Error(error_description || error);
+    }
     
     if (code) {
-      await supabase.auth.exchangeCodeForSession(code);
+      const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      if (exchangeError) throw exchangeError;
+      setRealtimeAuthFromSession(data.session);
     } else if (access_token && refresh_token) {
-      await supabase.auth.setSession({
+      const { data, error: sessionError } = await supabase.auth.setSession({
         access_token,
         refresh_token,
       });
+      if (sessionError) throw sessionError;
+      setRealtimeAuthFromSession(data.session);
     }
   } catch (e) {
+    if (isInvalidRefreshToken(e)) {
+      await clearStoredAuthSession();
+      return;
+    }
     console.error('Error handling deep link:', e);
   }
 }
