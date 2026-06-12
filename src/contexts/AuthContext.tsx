@@ -1,11 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { clearStoredAuthSession, isInvalidRefreshToken, setRealtimeAuthFromSession, supabase } from '../lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
-
-const isInvalidRefreshToken = (error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error || '');
-  return message.toLowerCase().includes('invalid refresh token') || message.toLowerCase().includes('refresh token not found');
-};
 
 interface AuthContextType {
   session: Session | null;
@@ -28,12 +23,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
+        setRealtimeAuthFromSession(session);
         setSession(session);
         setUser(session?.user ?? null);
       })
       .catch(async (error) => {
         if (isInvalidRefreshToken(error)) {
-          await supabase.auth.signOut({ scope: 'local' }).catch(() => null);
+          await clearStoredAuthSession();
         } else {
           console.error('Session restore failed:', error);
         }
@@ -43,6 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .finally(() => setLoading(false));
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setRealtimeAuthFromSession(session);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -52,7 +49,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut().catch(async (error) => {
+      if (!isInvalidRefreshToken(error)) throw error;
+    });
+    await clearStoredAuthSession();
     setSession(null);
     setUser(null);
   };

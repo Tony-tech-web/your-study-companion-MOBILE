@@ -1,14 +1,14 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  FlatList, KeyboardAvoidingView, Platform, ActivityIndicator,
+  FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, AppState,
 } from 'react-native';
 import { spacing, radius, shadow } from '../lib/theme';
 import { getChatMessages, sendChatMessage, ChatMessage } from '../services/chat';
 import { useAuth } from '../contexts/AuthContext';
 import { useMobileTheme } from '../contexts/ThemeContext';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { supabase } from '../lib/supabase';
+import { getCurrentSession, setRealtimeAuthFromSession, supabase } from '../lib/supabase';
 
 export default function ChatScreen() {
   const { user } = useAuth();
@@ -19,22 +19,35 @@ export default function ChatScreen() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [status, setStatus] = useState<'connecting' | 'live' | 'offline'>('connecting');
   const listRef = useRef<FlatList>(null);
 
-  useEffect(() => {
-    getChatMessages()
-      .then(setMessages)
-      .catch(console.error)
-      .finally(() => setLoading(false));
+  const loadMessages = useCallback(async (showLoader = false) => {
+    if (showLoader) setLoading(true);
+    try {
+      const next = await getChatMessages();
+      setMessages(next.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
+    } catch (error) {
+      console.error('Chat load failed:', error);
+      setStatus('offline');
+    } finally {
+      if (showLoader) setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
+    loadMessages(true);
+  }, [loadMessages]);
+
+  useEffect(() => {
     if (!user?.id) return;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
     const isVisibleToUser = (message: ChatMessage) =>
       !message.receiver_id || message.sender_id === user.id || message.receiver_id === user.id;
 
+    getCurrentSession().then(setRealtimeAuthFromSession).catch(() => null);
     const channel = supabase
-      .channel('orbit-mobile-chat-messages')
+      .channel(`orbit-mobile-chat-messages:${user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, payload => {
         const next = payload.new as ChatMessage | null;
         const old = payload.old as Partial<ChatMessage> | null;
@@ -49,12 +62,34 @@ export default function ChatScreen() {
           return merged.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         });
       })
-      .subscribe();
+      .subscribe((nextStatus) => {
+        if (nextStatus === 'SUBSCRIBED') {
+          setStatus('live');
+          loadMessages(false);
+        }
+        if (nextStatus === 'CHANNEL_ERROR' || nextStatus === 'TIMED_OUT' || nextStatus === 'CLOSED') {
+          setStatus('offline');
+          if (retryTimer) clearTimeout(retryTimer);
+          retryTimer = setTimeout(() => loadMessages(false), 1200);
+        }
+      });
+
+    const appSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        getCurrentSession().then(setRealtimeAuthFromSession).catch(() => null);
+        loadMessages(false);
+      }
+    });
+
+    const fallback = setInterval(() => loadMessages(false), 25000);
 
     return () => {
+      if (retryTimer) clearTimeout(retryTimer);
+      clearInterval(fallback);
+      appSub.remove();
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [loadMessages, user?.id]);
 
   const handleSend = async () => {
     if (!input.trim() || sending) return;
@@ -63,7 +98,10 @@ export default function ChatScreen() {
     setSending(true);
     try {
       const msg = await sendChatMessage(content);
-      setMessages(prev => prev.some(item => item.id === msg.id) ? prev : [...prev, msg]);
+      setMessages(prev => {
+        const merged = prev.some(item => item.id === msg.id) ? prev : [...prev, msg];
+        return merged.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      });
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (e) { console.error(e); }
     finally { setSending(false); }
@@ -89,7 +127,7 @@ export default function ChatScreen() {
         <View style={s.headerDot} />
         <View>
           <Text style={s.headerTitle}>Global Study Hub</Text>
-          <Text style={s.headerSub}>Campus channel - realtime active</Text>
+          <Text style={s.headerSub}>{status === 'live' ? 'Campus channel - realtime active' : status === 'offline' ? 'Reconnecting to campus channel' : 'Connecting to campus channel'}</Text>
         </View>
       </View>
 
@@ -109,12 +147,12 @@ export default function ChatScreen() {
               <View style={[s.msgRow, isMe && s.msgRowMe]}>
                 {!isMe && <View style={s.avatar}><Text style={s.avatarText}>U</Text></View>}
                 <View style={[s.bubble, isMe ? s.bubbleMe : s.bubbleThem]}>
-                  <Text style={[s.bubbleText, isMe && { color: '#fff' }]}>{item.content}</Text>
-                  <Text style={[s.time, isMe && { color: 'rgba(255,255,255,0.6)', textAlign: 'right' }]}>
+                  <Text style={[s.bubbleText, isMe && { color: colors.onPrimary }]}>{item.content}</Text>
+                  <Text style={[s.time, isMe && { color: colors.onPrimary, opacity: 0.6, textAlign: 'right' }]}>
                     {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </Text>
                 </View>
-                {isMe && <View style={[s.avatar, s.avatarMe]}><Text style={[s.avatarText, { color: '#fff' }]}>{user?.email?.slice(0,2).toUpperCase()}</Text></View>}
+                {isMe && <View style={[s.avatar, s.avatarMe]}><Text style={[s.avatarText, { color: colors.onPrimary }]}>{user?.email?.slice(0,2).toUpperCase()}</Text></View>}
               </View>
             );
           }}
