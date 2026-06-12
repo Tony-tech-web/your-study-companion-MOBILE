@@ -4,13 +4,14 @@ import {
   StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
-import { supabase } from '../lib/supabase';
+import { handleDeepLink, supabase } from '../lib/supabase';
 import { fontFamily, radius, shadow, spacing, typography } from '../lib/theme';
 import { useMobileTheme } from '../contexts/ThemeContext';
 
 WebBrowser.maybeCompleteAuthSession();
+
+const MOBILE_AUTH_REDIRECT = 'orbit://auth-callback';
 
 const GoogleMark = () => (
   <View style={{ flexDirection: 'row', width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' }}>
@@ -58,7 +59,7 @@ export default function LoginScreen() {
           email: email.trim(),
           password,
           options: {
-            emailRedirectTo: Linking.createURL('auth-callback'),
+            emailRedirectTo: MOBILE_AUTH_REDIRECT,
             data: {
               full_name: fullName.trim(),
               username: username.trim(),
@@ -82,7 +83,7 @@ export default function LoginScreen() {
     setGoogleLoading(true);
     setMessage(null);
     try {
-      const redirectTo = Linking.createURL('auth-callback');
+      const redirectTo = MOBILE_AUTH_REDIRECT;
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo, skipBrowserRedirect: true },
@@ -92,13 +93,7 @@ export default function LoginScreen() {
 
       const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
       if (result.type === 'success' && result.url) {
-        const hash = result.url.split('#')[1] || result.url.split('?')[1] || '';
-        const params = new URLSearchParams(hash);
-        const accessToken = params.get('access_token');
-        const refreshToken = params.get('refresh_token');
-        if (accessToken && refreshToken) {
-          await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-        }
+        await handleDeepLink(result.url);
       }
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Google sign-in failed.' });
